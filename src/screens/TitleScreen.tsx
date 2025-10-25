@@ -3,7 +3,6 @@ import {
   SafeAreaView,
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   ImageBackground,
 } from 'react-native';
@@ -25,14 +24,26 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onOpenSetting
       <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
       <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
 
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Image
             source={require('../../assets/icons/tile042.png')}
             style={{ width: 64, height: 64 }}
           />
-          <Text style={styles.title}>Nonogram</Text>
-          <Text style={styles.subtitle}>Logic Puzzles</Text>
+          <Text style={{
+            fontSize: 36,
+            fontWeight: '800',
+            color: '#333',
+            marginTop: 12,
+            fontFamily: 'Kenney-Future',
+          }}>Nonogram</Text>
+          <Text style={{
+            fontSize: 16,
+            color: '#666',
+            marginTop: 6,
+            marginBottom: 24,
+            fontFamily: 'Kenney-Future',
+          }}>Logic Puzzles</Text>
 
           <TouchableOpacity
             onPress={async () => {
@@ -45,15 +56,30 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onOpenSetting
             <ImageBackground
               source={require('../../assets/kenney_ui-pack/PNG/Blue/Default/button_rectangle_depth_gradient.png')}
               resizeMode="stretch"
-              style={[styles.buttonBg]}
+              style={{
+                height: 56,
+                marginTop: 12,
+                alignSelf: 'stretch',
+              }}
               imageStyle={{ borderRadius: 10 }}
             >
-              <View style={styles.buttonContent}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: 1,
+                gap: 8,
+              }}>
                 <Image
                   source={require('../../assets/icons/button_a.png')}
                   style={{ width: 20, height: 20 }}
                 />
-                <Text style={[styles.buttonText, styles.primaryText]}>Play</Text>
+                <Text style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: '#fff',
+                  fontFamily: 'Kenney-Future',
+                }}>Play</Text>
               </View>
             </ImageBackground>
           </TouchableOpacity>
@@ -69,15 +95,30 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onOpenSetting
             <ImageBackground
               source={require('../../assets/kenney_ui-pack/PNG/Blue/Default/button_rectangle_flat.png')}
               resizeMode="stretch"
-              style={styles.buttonBg}
+              style={{
+                height: 56,
+                marginTop: 12,
+                alignSelf: 'stretch',
+              }}
               imageStyle={{ borderRadius: 10 }}
             >
-              <View style={styles.buttonContent}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: 1,
+                gap: 8,
+              }}>
                 <Image
                   source={require('../../assets/icons/settings.png')}
                   style={{ width: 20, height: 20 }}
                 />
-                <Text style={styles.buttonText}>Settings</Text>
+                <Text style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: '#007AFF',
+                  fontFamily: 'Kenney-Future',
+                }}>Settings</Text>
               </View>
             </ImageBackground>
           </TouchableOpacity>
@@ -86,43 +127,5 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onOpenSetting
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'transparent' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  title: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#333',
-    marginTop: 12,
-    fontFamily: 'Kenney-Future',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 6,
-    marginBottom: 24,
-    fontFamily: 'Kenney-Future',
-  },
-  buttonBg: {
-    height: 56,
-    marginTop: 12,
-    alignSelf: 'stretch',
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    gap: 8,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
-    fontFamily: 'Kenney-Future',
-  },
-  primaryText: { color: '#fff' },
-});
 
 export default TitleScreen;
