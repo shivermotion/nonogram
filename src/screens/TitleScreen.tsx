@@ -1,7 +1,6 @@
 import React from 'react';
-import { SafeAreaView, ImageBackground } from 'react-native';
+import { SafeAreaView, View, Text, TouchableOpacity, ImageBackground } from 'react-native';
 import { Image } from 'react-native';
-import { View, Text, Button, Box, VStack, HStack } from '@gluestack-ui/themed';
 import { playClick } from '../utils/audio';
 import DepthFog from '../components/DepthFog';
 import LightRays from '../components/LightRays';
@@ -14,98 +13,132 @@ interface TitleScreenProps {
 
 export const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onOpenSettings }) => {
   return (
-    <Box flex={1} bg="$backgroundLight50">
+    <View style={{ flex: 1, backgroundColor: '#F8F9FF' }}>
       <DepthFog visible intensity={0.1} color="#2D1B3D" />
       <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
       <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
 
       <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
-        <VStack flex={1} alignItems="center" justifyContent="center" p="$6" space="md">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Image
             source={require('../../assets/icons/tile042.png')}
             style={{ width: 64, height: 64 }}
           />
-          
-          <VStack space="sm" alignItems="center">
-            <Text
-              size="4xl"
-              fontWeight="$extrabold"
-              color="$textLight900"
-              fontFamily="$kenney"
-            >
-              Nonogram
-            </Text>
-            <Text
-              size="md"
-              color="$textLight600"
-              fontFamily="$kenney"
-            >
-              Logic Puzzles
-            </Text>
-          </VStack>
+          <Text
+            style={{
+              fontSize: 36,
+              fontWeight: '800',
+              color: '#333',
+              marginTop: 12,
+              fontFamily: 'Kenney-Future',
+            }}
+          >
+            Nonogram
+          </Text>
+          <Text
+            style={{
+              fontSize: 16,
+              color: '#666',
+              marginTop: 6,
+              marginBottom: 24,
+              fontFamily: 'Kenney-Future',
+            }}
+          >
+            Logic Puzzles
+          </Text>
 
-          <VStack space="md" w="$full" mt="$6">
-            <Button
-              onPress={async () => {
-                await playClick();
-                onStart();
+          <TouchableOpacity
+            onPress={async () => {
+              await playClick();
+              onStart();
+            }}
+            activeOpacity={0.85}
+            style={{ alignSelf: 'stretch' }}
+          >
+            <ImageBackground
+              source={require('../../assets/kenney_ui-pack/PNG/Blue/Default/button_rectangle_depth_gradient.png')}
+              resizeMode="stretch"
+              style={{
+                height: 56,
+                marginTop: 12,
+                alignSelf: 'stretch',
               }}
-              action="primary"
-              variant="solid"
-              size="lg"
-              w="$full"
-              h={56}
-              bg="$primary500"
-              borderRadius="$lg"
+              imageStyle={{ borderRadius: 10 }}
             >
-              <HStack space="sm" alignItems="center">
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flex: 1,
+                  gap: 8,
+                }}
+              >
                 <Image
                   source={require('../../assets/icons/button_a.png')}
                   style={{ width: 20, height: 20 }}
                 />
                 <Text
-                  size="md"
-                  fontWeight="$semibold"
-                  color="$white"
-                  fontFamily="$kenney"
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '600',
+                    color: '#fff',
+                    fontFamily: 'Kenney-Future',
+                  }}
                 >
                   Play
                 </Text>
-              </HStack>
-            </Button>
+              </View>
+            </ImageBackground>
+          </TouchableOpacity>
 
-            <Button
-              onPress={async () => {
-                await playClick();
-                onOpenSettings();
+          <TouchableOpacity
+            onPress={async () => {
+              await playClick();
+              onOpenSettings();
+            }}
+            activeOpacity={0.85}
+            style={{ alignSelf: 'stretch' }}
+          >
+            <ImageBackground
+              source={require('../../assets/kenney_ui-pack/PNG/Blue/Default/button_rectangle_flat.png')}
+              resizeMode="stretch"
+              style={{
+                height: 56,
+                marginTop: 12,
+                alignSelf: 'stretch',
               }}
-              action="secondary"
-              variant="outline"
-              size="lg"
-              w="$full"
-              h={56}
-              borderColor="$primary500"
-              borderRadius="$lg"
+              imageStyle={{ borderRadius: 10 }}
             >
-              <HStack space="sm" alignItems="center">
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flex: 1,
+                  gap: 8,
+                }}
+              >
                 <Image
                   source={require('../../assets/icons/settings.png')}
                   style={{ width: 20, height: 20 }}
                 />
                 <Text
-                  size="md"
-                  fontWeight="$semibold"
-                  color="$primary500"
-                  fontFamily="$kenney"
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '600',
+                    color: '#007AFF',
+                    fontFamily: 'Kenney-Future',
+                  }}
                 >
                   Settings
                 </Text>
-              </HStack>
-            </Button>
-          </VStack>
-        </VStack>
+              </View>
+            </ImageBackground>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
-    </Box>
+    </View>
   );
 };
 

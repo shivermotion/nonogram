@@ -8,7 +8,6 @@ import MenuScreen from './src/screens/MenuScreen';
 import GameScreen from './src/screens/GameScreen';
 import TitleScreen from './src/screens/TitleScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import GluestackProvider from './src/providers/GluestackProvider';
 import {
   getOrCreateUserProfile,
   updateStats,
@@ -89,44 +88,42 @@ export default function App() {
   };
 
   return (
-    <GluestackProvider>
-      <GestureHandlerRootView style={styles.container}>
-        <StatusBar style="dark" />
-        {showTitle ? (
-          <TitleScreen
-            onStart={() => {
-              setShowSettings(false);
-              setShowTitle(false);
-            }}
-            onOpenSettings={() => {
-              setShowTitle(false);
-              setShowSettings(true);
-            }}
-          />
-        ) : showSettings ? (
-          <SettingsScreen
-            onBack={() => {
-              setShowSettings(false);
-              setShowTitle(true);
-            }}
-          />
-        ) : currentPuzzle ? (
-          <GameScreen
-            puzzle={currentPuzzle}
-            onBack={handleBackToMenu}
-            onComplete={handleGameComplete}
-          />
-        ) : (
-          <MenuScreen
-            onBack={() => {
-              setShowTitle(true);
-              setShowSettings(false);
-            }}
-            onPuzzleSelect={puzzle => setCurrentPuzzle(puzzle)}
-          />
-        )}
-      </GestureHandlerRootView>
-    </GluestackProvider>
+    <GestureHandlerRootView style={styles.container}>
+      <StatusBar style="dark" />
+      {showTitle ? (
+        <TitleScreen
+          onStart={() => {
+            setShowSettings(false);
+            setShowTitle(false);
+          }}
+          onOpenSettings={() => {
+            setShowTitle(false);
+            setShowSettings(true);
+          }}
+        />
+      ) : showSettings ? (
+        <SettingsScreen
+          onBack={() => {
+            setShowSettings(false);
+            setShowTitle(true);
+          }}
+        />
+      ) : currentPuzzle ? (
+        <GameScreen
+          puzzle={currentPuzzle}
+          onBack={handleBackToMenu}
+          onComplete={handleGameComplete}
+        />
+      ) : (
+        <MenuScreen
+          onBack={() => {
+            setShowTitle(true);
+            setShowSettings(false);
+          }}
+          onPuzzleSelect={puzzle => setCurrentPuzzle(puzzle)}
+        />
+      )}
+    </GestureHandlerRootView>
   );
 }
 
