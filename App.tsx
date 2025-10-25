@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Alert } from 'react-native';
+import * as Font from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NonogramPuzzle, UserProfile } from './src/types/game';
 import MenuScreen from './src/screens/MenuScreen';
@@ -12,6 +13,7 @@ import {
   updateStats,
   checkAndUnlockAchievements,
 } from './src/utils/storage';
+import { preloadAudio } from './src/utils/audio';
 
 export default function App() {
   const [currentPuzzle, setCurrentPuzzle] = useState<NonogramPuzzle | null>(null);
@@ -23,8 +25,13 @@ export default function App() {
     // Initialize user profile on app start
     const initializeProfile = async () => {
       try {
+        await Font.loadAsync({
+          'Kenney-Future': require('./assets/kenney_ui-pack/Font/Kenney Future.ttf'),
+          'Kenney-Future-Narrow': require('./assets/kenney_ui-pack/Font/Kenney Future Narrow.ttf'),
+        });
         const profile = await getOrCreateUserProfile();
         setUserProfile(profile);
+        await preloadAudio();
       } catch (error) {
         console.error('Failed to initialize user profile:', error);
       }

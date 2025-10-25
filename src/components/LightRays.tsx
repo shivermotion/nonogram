@@ -90,7 +90,9 @@ export const LightRays: React.FC<LightRaysProps> = ({
                   <LinearGradient
                     start={vec(0, 0)}
                     end={vec(w, 0)}
-                    colors={[`${color}00`, `${color}66`, `${color}AA`, `${color}66`, `${color}00`] as any}
+                    colors={
+                      [`${color}00`, `${color}66`, `${color}AA`, `${color}66`, `${color}00`] as any
+                    }
                   />
                 </Rect>
               </Group>

@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   Alert,
   Dimensions,
+  ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
 import { NonogramPuzzle, CellState, Position } from '../types/game';
 import { useGame } from '../hooks/useGame';
 import GameGrid from '../components/GameGrid';
@@ -219,7 +221,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.headerButton}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Image
+              source={require('../../assets/kenney_ui-pack/PNG/Blue/Default/arrow_basic_w_small.png')}
+              style={{ width: 24, height: 24 }}
+            />
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>

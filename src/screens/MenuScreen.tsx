@@ -7,8 +7,11 @@ import {
   TouchableOpacity,
   ScrollView,
   FlatList,
+  ImageBackground,
 } from 'react-native';
+import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { playClick } from '../utils/audio';
 import { NonogramPuzzle, Difficulty, Category } from '../types/game';
 import { PUZZLES, getPuzzlesByDifficulty, getPuzzlesByCategory } from '../data/puzzles';
 import { getCompletedPuzzles } from '../utils/storage';
@@ -322,8 +325,17 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.headerButton}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
+          <TouchableOpacity
+            onPress={async () => {
+              await playClick();
+              onBack();
+            }}
+            style={styles.headerButton}
+          >
+            <Image
+              source={require('../../assets/kenney_ui-pack/PNG/Blue/Default/arrow_basic_w_small.png')}
+              style={{ width: 24, height: 24 }}
+            />
           </TouchableOpacity>
           <Text style={styles.title}>Puzzles</Text>
           <View style={styles.headerButton} />
@@ -332,11 +344,11 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
         {/* Filter Tabs */}
         <View style={styles.filterTabs}>
           <TouchableOpacity
-            style={[styles.filterTab, filterType === FilterType.ALL && styles.filterTabActive]}
             onPress={() => {
               setFilterType(FilterType.ALL);
               setSelectedFilter('all');
             }}
+            style={[styles.filterTab, filterType === FilterType.ALL && styles.filterTabActive]}
           >
             <Text
               style={[
@@ -349,14 +361,14 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.filterTab,
-              filterType === FilterType.DIFFICULTY && styles.filterTabActive,
-            ]}
             onPress={() => {
               setFilterType(FilterType.DIFFICULTY);
               setSelectedFilter('all');
             }}
+            style={[
+              styles.filterTab,
+              filterType === FilterType.DIFFICULTY && styles.filterTabActive,
+            ]}
           >
             <Text
               style={[
@@ -369,11 +381,11 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterTab, filterType === FilterType.CATEGORY && styles.filterTabActive]}
             onPress={() => {
               setFilterType(FilterType.CATEGORY);
               setSelectedFilter('all');
             }}
+            style={[styles.filterTab, filterType === FilterType.CATEGORY && styles.filterTabActive]}
           >
             <Text
               style={[
@@ -386,11 +398,11 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterTab, filterType === FilterType.SIZE && styles.filterTabActive]}
             onPress={() => {
               setFilterType(FilterType.SIZE);
               setSelectedFilter('all');
             }}
+            style={[styles.filterTab, filterType === FilterType.SIZE && styles.filterTabActive]}
           >
             <Text
               style={[
@@ -454,11 +466,13 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#333',
+    fontFamily: 'Kenney-Future',
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
     marginTop: 4,
+    fontFamily: 'Kenney-Future',
   },
   filterTabs: {
     flexDirection: 'row',
@@ -468,20 +482,24 @@ const styles = StyleSheet.create({
   },
   filterTab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 8,
     alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    marginHorizontal: 2,
+    borderRadius: 6,
   },
   filterTabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#007AFF',
+    backgroundColor: '#007AFF',
   },
   filterTabText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#666',
+    fontFamily: 'Kenney-Future',
+    textAlign: 'center',
   },
   filterTabTextActive: {
-    color: '#007AFF',
+    color: '#fff',
   },
   filterOptions: {
     backgroundColor: '#fff',
@@ -510,6 +528,7 @@ const styles = StyleSheet.create({
     color: '#333',
     marginLeft: 4,
     textTransform: 'capitalize',
+    fontFamily: 'Kenney-Future',
   },
   filterOptionTextActive: {
     color: '#fff',
@@ -528,6 +547,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     fontWeight: '500',
+    fontFamily: 'Kenney-Future',
   },
   puzzleItem: {
     flexDirection: 'row',
@@ -566,16 +586,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+    fontFamily: 'Kenney-Future',
   },
   puzzleSize: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
-  },
-  puzzleDescription: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 4,
+    fontFamily: 'Kenney-Future',
   },
   puzzleMeta: {
     marginLeft: 12,
@@ -592,6 +609,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 4,
     textTransform: 'capitalize',
+    fontFamily: 'Kenney-Future',
   },
   footer: {
     padding: 16,
@@ -603,6 +621,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     color: '#666',
+    fontFamily: 'Kenney-Future',
   },
 });
 
