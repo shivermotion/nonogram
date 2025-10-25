@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getOrCreateUserProfile, saveUserProfile } from '../utils/storage';
+import DepthFog from '../components/DepthFog';
+import LightRays from '../components/LightRays';
+import GridBackground from '../components/GridBackground';
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -36,55 +39,61 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Settings</Text>
-        <View style={styles.headerButton} />
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#F8F9FF' }}>
+      <DepthFog visible intensity={0.1} color="#2D1B3D" />
+      <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
+      <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
 
-      <View style={styles.list}>
-        <View style={styles.row}>
-          <Text style={styles.rowText}>Sound</Text>
-          <Switch
-            value={soundEnabled}
-            onValueChange={async v => {
-              setSoundEnabled(v);
-              await persist({ soundEnabled: v });
-            }}
-          />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onBack} style={styles.headerButton}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Settings</Text>
+          <View style={styles.headerButton} />
         </View>
 
-        <View style={styles.row}>
-          <Text style={styles.rowText}>Vibration</Text>
-          <Switch
-            value={vibrationEnabled}
-            onValueChange={async v => {
-              setVibrationEnabled(v);
-              await persist({ vibrationEnabled: v });
-            }}
-          />
-        </View>
+        <View style={styles.list}>
+          <View style={styles.row}>
+            <Text style={styles.rowText}>Sound</Text>
+            <Switch
+              value={soundEnabled}
+              onValueChange={async v => {
+                setSoundEnabled(v);
+                await persist({ soundEnabled: v });
+              }}
+            />
+          </View>
 
-        <View style={styles.row}>
-          <Text style={styles.rowText}>Show Timer</Text>
-          <Switch
-            value={showTimer}
-            onValueChange={async v => {
-              setShowTimer(v);
-              await persist({ showTimer: v });
-            }}
-          />
+          <View style={styles.row}>
+            <Text style={styles.rowText}>Vibration</Text>
+            <Switch
+              value={vibrationEnabled}
+              onValueChange={async v => {
+                setVibrationEnabled(v);
+                await persist({ vibrationEnabled: v });
+              }}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.rowText}>Show Timer</Text>
+            <Switch
+              value={showTimer}
+              onValueChange={async v => {
+                setShowTimer(v);
+                await persist({ showTimer: v });
+              }}
+            />
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

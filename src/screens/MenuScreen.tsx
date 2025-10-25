@@ -12,9 +12,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { NonogramPuzzle, Difficulty, Category } from '../types/game';
 import { PUZZLES, getPuzzlesByDifficulty, getPuzzlesByCategory } from '../data/puzzles';
 import { getCompletedPuzzles } from '../utils/storage';
+import DepthFog from '../components/DepthFog';
+import LightRays from '../components/LightRays';
+import GridBackground from '../components/GridBackground';
 
 interface MenuScreenProps {
   onPuzzleSelect: (puzzle: NonogramPuzzle) => void;
+  onBack: () => void;
 }
 
 enum FilterType {
@@ -24,7 +28,7 @@ enum FilterType {
   SIZE = 'size',
 }
 
-export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect }) => {
+export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }) => {
   const [filterType, setFilterType] = useState<FilterType>(FilterType.ALL);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [completedMap, setCompletedMap] = useState<Record<string, any>>({});
@@ -310,121 +314,142 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect }) => {
   const filteredPuzzles = getFilteredPuzzles();
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header removed */}
+    <View style={{ flex: 1, backgroundColor: '#F8F9FF' }}>
+      <DepthFog visible intensity={0.1} color="#2D1B3D" />
+      <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
+      <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
 
-      {/* Filter Tabs */}
-      <View style={styles.filterTabs}>
-        <TouchableOpacity
-          style={[styles.filterTab, filterType === FilterType.ALL && styles.filterTabActive]}
-          onPress={() => {
-            setFilterType(FilterType.ALL);
-            setSelectedFilter('all');
-          }}
-        >
-          <Text
-            style={[
-              styles.filterTabText,
-              filterType === FilterType.ALL && styles.filterTabTextActive,
-            ]}
+      <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onBack} style={styles.headerButton}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Puzzles</Text>
+          <View style={styles.headerButton} />
+        </View>
+
+        {/* Filter Tabs */}
+        <View style={styles.filterTabs}>
+          <TouchableOpacity
+            style={[styles.filterTab, filterType === FilterType.ALL && styles.filterTabActive]}
+            onPress={() => {
+              setFilterType(FilterType.ALL);
+              setSelectedFilter('all');
+            }}
           >
-            All
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.filterTabText,
+                filterType === FilterType.ALL && styles.filterTabTextActive,
+              ]}
+            >
+              All
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.filterTab, filterType === FilterType.DIFFICULTY && styles.filterTabActive]}
-          onPress={() => {
-            setFilterType(FilterType.DIFFICULTY);
-            setSelectedFilter('all');
-          }}
-        >
-          <Text
+          <TouchableOpacity
             style={[
-              styles.filterTabText,
-              filterType === FilterType.DIFFICULTY && styles.filterTabTextActive,
+              styles.filterTab,
+              filterType === FilterType.DIFFICULTY && styles.filterTabActive,
             ]}
+            onPress={() => {
+              setFilterType(FilterType.DIFFICULTY);
+              setSelectedFilter('all');
+            }}
           >
-            Difficulty
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.filterTabText,
+                filterType === FilterType.DIFFICULTY && styles.filterTabTextActive,
+              ]}
+            >
+              Difficulty
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.filterTab, filterType === FilterType.CATEGORY && styles.filterTabActive]}
-          onPress={() => {
-            setFilterType(FilterType.CATEGORY);
-            setSelectedFilter('all');
-          }}
-        >
-          <Text
-            style={[
-              styles.filterTabText,
-              filterType === FilterType.CATEGORY && styles.filterTabTextActive,
-            ]}
+          <TouchableOpacity
+            style={[styles.filterTab, filterType === FilterType.CATEGORY && styles.filterTabActive]}
+            onPress={() => {
+              setFilterType(FilterType.CATEGORY);
+              setSelectedFilter('all');
+            }}
           >
-            Category
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.filterTabText,
+                filterType === FilterType.CATEGORY && styles.filterTabTextActive,
+              ]}
+            >
+              Category
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.filterTab, filterType === FilterType.SIZE && styles.filterTabActive]}
-          onPress={() => {
-            setFilterType(FilterType.SIZE);
-            setSelectedFilter('all');
-          }}
-        >
-          <Text
-            style={[
-              styles.filterTabText,
-              filterType === FilterType.SIZE && styles.filterTabTextActive,
-            ]}
+          <TouchableOpacity
+            style={[styles.filterTab, filterType === FilterType.SIZE && styles.filterTabActive]}
+            onPress={() => {
+              setFilterType(FilterType.SIZE);
+              setSelectedFilter('all');
+            }}
           >
-            Size
+            <Text
+              style={[
+                styles.filterTabText,
+                filterType === FilterType.SIZE && styles.filterTabTextActive,
+              ]}
+            >
+              Size
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Filter Options */}
+        {filterType !== FilterType.ALL && (
+          <View style={styles.filterOptions}>{renderFilterOptions()}</View>
+        )}
+
+        {/* Puzzles List */}
+        <FlatList
+          data={filteredPuzzles}
+          keyExtractor={item => item.id}
+          renderItem={renderPuzzleItem}
+          style={styles.puzzlesList}
+          contentContainerStyle={styles.puzzlesListContent}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={styles.promptContainer}>
+              <Text style={styles.promptText}>Choose a puzzle to solve</Text>
+            </View>
+          }
+        />
+
+        {/* Footer Info */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            {filteredPuzzles.length} puzzle{filteredPuzzles.length !== 1 ? 's' : ''} available
           </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Filter Options */}
-      {filterType !== FilterType.ALL && (
-        <View style={styles.filterOptions}>{renderFilterOptions()}</View>
-      )}
-
-      {/* Puzzles List */}
-      <FlatList
-        data={filteredPuzzles}
-        keyExtractor={item => item.id}
-        renderItem={renderPuzzleItem}
-        style={styles.puzzlesList}
-        contentContainerStyle={styles.puzzlesListContent}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <View style={styles.promptContainer}>
-            <Text style={styles.promptText}>Choose a puzzle to solve</Text>
-          </View>
-        }
-      />
-
-      {/* Footer Info */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          {filteredPuzzles.length} puzzle{filteredPuzzles.length !== 1 ? 's' : ''} available
-        </Text>
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'transparent',
   },
   header: {
-    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
   },
+  headerButton: { padding: 8 },
   title: {
     fontSize: 28,
     fontWeight: '700',

@@ -108,7 +108,13 @@ export default function App() {
           onComplete={handleGameComplete}
         />
       ) : (
-        <MenuScreen onPuzzleSelect={puzzle => setCurrentPuzzle(puzzle)} />
+        <MenuScreen
+          onBack={() => {
+            setShowTitle(true);
+            setShowSettings(false);
+          }}
+          onPuzzleSelect={puzzle => setCurrentPuzzle(puzzle)}
+        />
       )}
     </GestureHandlerRootView>
   );

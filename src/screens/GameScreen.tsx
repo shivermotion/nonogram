@@ -13,6 +13,9 @@ import { NonogramPuzzle, CellState, Position } from '../types/game';
 import { useGame } from '../hooks/useGame';
 import GameGrid from '../components/GameGrid';
 import CluesDisplay from '../components/CluesDisplay';
+import DepthFog from '../components/DepthFog';
+import LightRays from '../components/LightRays';
+import GridBackground from '../components/GridBackground';
 
 const windowDimensions = Dimensions.get('window');
 const screenWidth = windowDimensions.width;
@@ -207,175 +210,181 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   }, [isPlaying, isPaused, pauseGame, resumeGame]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: '#F8F9FF' }}>
+      <DepthFog visible intensity={0.1} color="#2D1B3D" />
+      <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
+      <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
 
-        <View style={styles.headerCenter}>
-          <Text style={styles.title}>{puzzle.name}</Text>
-          <Text style={styles.subtitle}>{subtitleText}</Text>
+      <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onBack} style={styles.headerButton}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+
+          <View style={styles.headerCenter}>
+            <Text style={styles.title}>{puzzle.name}</Text>
+            <Text style={styles.subtitle}>{subtitleText}</Text>
+          </View>
+
+          <TouchableOpacity onPress={handlePause} style={styles.headerButton}>
+            <Ionicons name={isPlaying ? 'pause' : 'play'} size={24} color="#333" />
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={handlePause} style={styles.headerButton}>
-          <Ionicons name={isPlaying ? 'pause' : 'play'} size={24} color="#333" />
-        </TouchableOpacity>
-      </View>
+        {/* Game Info */}
+        <View style={styles.gameInfo}>
+          <View style={styles.infoItem}>
+            <Ionicons name="time-outline" size={16} color="#666" />
+            <Text style={styles.infoText} key={displayTick}>
+              {formatTime(getElapsedTime())}
+            </Text>
+          </View>
 
-      {/* Game Info */}
-      <View style={styles.gameInfo}>
-        <View style={styles.infoItem}>
-          <Ionicons name="time-outline" size={16} color="#666" />
-          <Text style={styles.infoText} key={displayTick}>
-            {formatTime(getElapsedTime())}
-          </Text>
+          <View style={styles.infoItem}>
+            <Ionicons name="help-circle-outline" size={16} color="#666" />
+            <Text style={styles.infoText}>{hintsUsed}</Text>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Ionicons name="checkmark-circle-outline" size={16} color="#666" />
+            <Text style={styles.infoText}>{filledCount}</Text>
+          </View>
         </View>
 
-        <View style={styles.infoItem}>
-          <Ionicons name="help-circle-outline" size={16} color="#666" />
-          <Text style={styles.infoText}>{hintsUsed}</Text>
+        {/* Game Area */}
+        <View style={styles.gameArea}>
+          {isPaused ? (
+            <View style={styles.pausedOverlay}>
+              <Text style={styles.pausedText}>Game Paused</Text>
+              <TouchableOpacity onPress={resumeGame} style={styles.resumeButton}>
+                <Text style={styles.resumeButtonText}>Resume</Text>
+              </TouchableOpacity>
+            </View>
+          ) : showCompleted ? (
+            <View style={styles.pausedOverlay}>
+              <Text style={styles.pausedText}>Level Completed!</Text>
+              <Text style={styles.subtitle}>Time: {formatTime(completedTime)}</Text>
+              <Text style={styles.subtitle}>Hints: {completedHints}</Text>
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowCompleted(false);
+                    onComplete?.(puzzle, completedTime, completedHints);
+                  }}
+                  style={styles.actionButton}
+                >
+                  <Ionicons name="chevron-forward-outline" size={20} color="#007AFF" />
+                  <Text style={styles.actionButtonText}>Continue</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowCompleted(false);
+                    resetGame();
+                  }}
+                  style={styles.actionButton}
+                >
+                  <Ionicons name="refresh-outline" size={20} color="#007AFF" />
+                  <Text style={styles.actionButtonText}>Replay</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.gameContent}>
+              <View style={styles.puzzleLayout}>
+                <CluesDisplay
+                  puzzle={puzzle}
+                  grid={session.currentGrid}
+                  showValidation={true}
+                  cellSize={cellSize}
+                  renderGrid={() => (
+                    <GameGrid
+                      puzzle={puzzle}
+                      grid={session.currentGrid}
+                      onCellPress={handleCellPress}
+                      onCellLongPress={handleCellLongPress}
+                      disabled={!isPlaying}
+                      cellSize={cellSize}
+                      showSolution={showSolution}
+                    />
+                  )}
+                />
+              </View>
+            </View>
+          )}
         </View>
 
-        <View style={styles.infoItem}>
-          <Ionicons name="checkmark-circle-outline" size={16} color="#666" />
-          <Text style={styles.infoText}>{filledCount}</Text>
-        </View>
-      </View>
+        {/* Controls */}
+        <View style={styles.controls}>
+          {/* Input Mode Toggle */}
+          <View style={styles.modeToggle}>
+            <TouchableOpacity
+              style={[styles.modeButton, inputMode === InputMode.FILL && styles.modeButtonActive]}
+              onPress={() => setInputMode(InputMode.FILL)}
+            >
+              <View style={styles.fillIcon} />
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  inputMode === InputMode.FILL && styles.modeButtonTextActive,
+                ]}
+              >
+                Fill
+              </Text>
+            </TouchableOpacity>
 
-      {/* Game Area */}
-      <View style={styles.gameArea}>
-        {isPaused ? (
-          <View style={styles.pausedOverlay}>
-            <Text style={styles.pausedText}>Game Paused</Text>
-            <TouchableOpacity onPress={resumeGame} style={styles.resumeButton}>
-              <Text style={styles.resumeButtonText}>Resume</Text>
+            <TouchableOpacity
+              style={[styles.modeButton, inputMode === InputMode.MARK && styles.modeButtonActive]}
+              onPress={() => setInputMode(InputMode.MARK)}
+            >
+              <Ionicons
+                name="close"
+                size={16}
+                color={inputMode === InputMode.MARK ? '#fff' : '#666'}
+              />
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  inputMode === InputMode.MARK && styles.modeButtonTextActive,
+                ]}
+              >
+                Mark
+              </Text>
             </TouchableOpacity>
           </View>
-        ) : showCompleted ? (
-          <View style={styles.pausedOverlay}>
-            <Text style={styles.pausedText}>Level Completed!</Text>
-            <Text style={styles.subtitle}>Time: {formatTime(completedTime)}</Text>
-            <Text style={styles.subtitle}>Hints: {completedHints}</Text>
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                onPress={() => {
-                  setShowCompleted(false);
-                  onComplete?.(puzzle, completedTime, completedHints);
-                }}
-                style={styles.actionButton}
-              >
-                <Ionicons name="chevron-forward-outline" size={20} color="#007AFF" />
-                <Text style={styles.actionButtonText}>Continue</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setShowCompleted(false);
-                  resetGame();
-                }}
-                style={styles.actionButton}
-              >
-                <Ionicons name="refresh-outline" size={20} color="#007AFF" />
-                <Text style={styles.actionButtonText}>Replay</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.gameContent}>
-            <View style={styles.puzzleLayout}>
-              <CluesDisplay
-                puzzle={puzzle}
-                grid={session.currentGrid}
-                showValidation={true}
-                cellSize={cellSize}
-                renderGrid={() => (
-                  <GameGrid
-                    puzzle={puzzle}
-                    grid={session.currentGrid}
-                    onCellPress={handleCellPress}
-                    onCellLongPress={handleCellLongPress}
-                    disabled={!isPlaying}
-                    cellSize={cellSize}
-                    showSolution={showSolution}
-                  />
-                )}
-              />
-            </View>
-          </View>
-        )}
-      </View>
 
-      {/* Controls */}
-      <View style={styles.controls}>
-        {/* Input Mode Toggle */}
-        <View style={styles.modeToggle}>
-          <TouchableOpacity
-            style={[styles.modeButton, inputMode === InputMode.FILL && styles.modeButtonActive]}
-            onPress={() => setInputMode(InputMode.FILL)}
-          >
-            <View style={styles.fillIcon} />
-            <Text
-              style={[
-                styles.modeButtonText,
-                inputMode === InputMode.FILL && styles.modeButtonTextActive,
-              ]}
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity onPress={handleHint} style={styles.actionButton}>
+              <Ionicons name="help-circle-outline" size={20} color="#007AFF" />
+              <Text style={styles.actionButtonText}>Hint</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setShowSolution(!showSolution)}
+              style={styles.actionButton}
             >
-              Fill
-            </Text>
-          </TouchableOpacity>
+              <Ionicons name="eye-outline" size={20} color={showSolution ? '#FF9500' : '#666'} />
+              <Text style={[styles.actionButtonText, { color: showSolution ? '#FF9500' : '#333' }]}>
+                Debug
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.modeButton, inputMode === InputMode.MARK && styles.modeButtonActive]}
-            onPress={() => setInputMode(InputMode.MARK)}
-          >
-            <Ionicons
-              name="close"
-              size={16}
-              color={inputMode === InputMode.MARK ? '#fff' : '#666'}
-            />
-            <Text
-              style={[
-                styles.modeButtonText,
-                inputMode === InputMode.MARK && styles.modeButtonTextActive,
-              ]}
-            >
-              Mark
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={handleReset} style={styles.actionButton}>
+              <Ionicons name="refresh-outline" size={20} color="#FF3B30" />
+              <Text style={styles.actionButtonText}>Reset</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity onPress={handleHint} style={styles.actionButton}>
-            <Ionicons name="help-circle-outline" size={20} color="#007AFF" />
-            <Text style={styles.actionButtonText}>Hint</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setShowSolution(!showSolution)}
-            style={styles.actionButton}
-          >
-            <Ionicons name="eye-outline" size={20} color={showSolution ? '#FF9500' : '#666'} />
-            <Text style={[styles.actionButtonText, { color: showSolution ? '#FF9500' : '#333' }]}>
-              Debug
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleReset} style={styles.actionButton}>
-            <Ionicons name="refresh-outline" size={20} color="#FF3B30" />
-            <Text style={styles.actionButtonText}>Reset</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
