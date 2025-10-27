@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, TouchableOpacity, ImageBackground } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import Animated, {
@@ -168,12 +169,15 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onOpenSetting
       <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
       <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
 
-      <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: 'transparent' }}
+        edges={['top', 'bottom', 'left', 'right']}
+      >
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Animated.View style={animatedVideoStyle}>
             <Video
               source={require('../../assets/video/social_shamtaro_a_grid_with_the_cells_being_filled_in_to_create_a_be_1f322b2f-cf26-4a1c-b9ed-c0f93ee11216_3.mp4')}
-              style={{ width: 400, height: 400, borderRadius: 18 }}
+              style={{ width: 500, height: 500, borderRadius: 18 }}
               shouldPlay
               isLooping
               resizeMode={ResizeMode.CONTAIN}

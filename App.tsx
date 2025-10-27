@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Alert } from 'react-native';
 import * as Font from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NonogramPuzzle, UserProfile } from './src/types/game';
 import MenuScreen from './src/screens/MenuScreen';
 import GameScreen from './src/screens/GameScreen';
@@ -88,42 +89,44 @@ export default function App() {
   };
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <StatusBar style="dark" />
-      {showTitle ? (
-        <TitleScreen
-          onStart={() => {
-            setShowSettings(false);
-            setShowTitle(false);
-          }}
-          onOpenSettings={() => {
-            setShowTitle(false);
-            setShowSettings(true);
-          }}
-        />
-      ) : showSettings ? (
-        <SettingsScreen
-          onBack={() => {
-            setShowSettings(false);
-            setShowTitle(true);
-          }}
-        />
-      ) : currentPuzzle ? (
-        <GameScreen
-          puzzle={currentPuzzle}
-          onBack={handleBackToMenu}
-          onComplete={handleGameComplete}
-        />
-      ) : (
-        <MenuScreen
-          onBack={() => {
-            setShowTitle(true);
-            setShowSettings(false);
-          }}
-          onPuzzleSelect={puzzle => setCurrentPuzzle(puzzle)}
-        />
-      )}
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={styles.container}>
+        <StatusBar style="dark" />
+        {showTitle ? (
+          <TitleScreen
+            onStart={() => {
+              setShowSettings(false);
+              setShowTitle(false);
+            }}
+            onOpenSettings={() => {
+              setShowTitle(false);
+              setShowSettings(true);
+            }}
+          />
+        ) : showSettings ? (
+          <SettingsScreen
+            onBack={() => {
+              setShowSettings(false);
+              setShowTitle(true);
+            }}
+          />
+        ) : currentPuzzle ? (
+          <GameScreen
+            puzzle={currentPuzzle}
+            onBack={handleBackToMenu}
+            onComplete={handleGameComplete}
+          />
+        ) : (
+          <MenuScreen
+            onBack={() => {
+              setShowTitle(true);
+              setShowSettings(false);
+            }}
+            onPuzzleSelect={puzzle => setCurrentPuzzle(puzzle)}
+          />
+        )}
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
 

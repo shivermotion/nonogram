@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Alert,
   Dimensions,
   ImageBackground,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'react-native';
 import { NonogramPuzzle, CellState, Position } from '../types/game';
@@ -18,6 +18,8 @@ import CluesDisplay from '../components/CluesDisplay';
 import DepthFog from '../components/DepthFog';
 import LightRays from '../components/LightRays';
 import GridBackground from '../components/GridBackground';
+import LevelCompleteOverlay from '../components/LevelCompleteOverlay';
+import { playCompletion, playLevelCompleteMusic } from '../utils/audio';
 
 const windowDimensions = Dimensions.get('window');
 const screenWidth = windowDimensions.width;
@@ -38,9 +40,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   const [inputMode, setInputMode] = useState<InputMode>(InputMode.FILL);
   const [showSolution, setShowSolution] = useState(false);
   const [displayTick, setDisplayTick] = useState(0);
-  const [showCompleted, setShowCompleted] = useState(false);
   const [completedTime, setCompletedTime] = useState<number>(0);
   const [completedHints, setCompletedHints] = useState<number>(0);
+  const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
 
   // Clue sizing calculation (shared) to avoid duplication
   const clueSizing = useMemo(() => {
@@ -135,10 +137,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
     hintsUsed,
   } = useGame({
     puzzle,
-    onGameComplete: completedSession => {
+    onFinalCellPlaced: async () => {
+      // Play completion sound when final cell is placed
+      await playCompletion();
+    },
+    onGameComplete: async completedSession => {
+      // Play level complete music
+      await playLevelCompleteMusic();
+
+      // Show level complete overlay after a delay
+      setTimeout(() => {
+        setShowLevelCompleteOverlay(true);
+      }, 500);
+
       setCompletedTime(completedSession.elapsedTime);
       setCompletedHints(completedSession.hintsUsed);
-      setShowCompleted(true);
     },
   });
 
@@ -156,6 +169,20 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleCompletionAnimationFinish = () => {
+    // Animation complete - overlay now handles everything
+  };
+
+  const handleContinue = () => {
+    setShowLevelCompleteOverlay(false);
+    onComplete?.(puzzle, completedTime, completedHints);
+  };
+
+  const handleReplay = () => {
+    setShowLevelCompleteOverlay(false);
+    resetGame();
   };
 
   const handleCellPress = useCallback(
@@ -217,7 +244,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
       <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
       <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
 
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.headerButton}>
@@ -265,34 +292,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
               <TouchableOpacity onPress={resumeGame} style={styles.resumeButton}>
                 <Text style={styles.resumeButtonText}>Resume</Text>
               </TouchableOpacity>
-            </View>
-          ) : showCompleted ? (
-            <View style={styles.pausedOverlay}>
-              <Text style={styles.pausedText}>Level Completed!</Text>
-              <Text style={styles.subtitle}>Time: {formatTime(completedTime)}</Text>
-              <Text style={styles.subtitle}>Hints: {completedHints}</Text>
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowCompleted(false);
-                    onComplete?.(puzzle, completedTime, completedHints);
-                  }}
-                  style={styles.actionButton}
-                >
-                  <Ionicons name="chevron-forward-outline" size={20} color="#007AFF" />
-                  <Text style={styles.actionButtonText}>Continue</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowCompleted(false);
-                    resetGame();
-                  }}
-                  style={styles.actionButton}
-                >
-                  <Ionicons name="refresh-outline" size={20} color="#007AFF" />
-                  <Text style={styles.actionButtonText}>Replay</Text>
-                </TouchableOpacity>
-              </View>
             </View>
           ) : (
             <View style={styles.gameContent}>
@@ -381,6 +380,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Level Complete Overlay */}
+        <LevelCompleteOverlay
+          puzzle={puzzle}
+          visible={showLevelCompleteOverlay}
+          completedTime={completedTime}
+          completedHints={completedHints}
+          onContinue={handleContinue}
+          onReplay={handleReplay}
+          onAnimationComplete={handleCompletionAnimationFinish}
+        />
       </SafeAreaView>
     </View>
   );

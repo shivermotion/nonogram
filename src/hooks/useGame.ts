@@ -22,9 +22,10 @@ interface UseGameProps {
   puzzle: NonogramPuzzle;
   onGameComplete?: (session: GameSession) => void;
   onGameStateChange?: (state: GameState) => void;
+  onFinalCellPlaced?: () => void;
 }
 
-export function useGame({ puzzle, onGameComplete, onGameStateChange }: UseGameProps) {
+export function useGame({ puzzle, onGameComplete, onGameStateChange, onFinalCellPlaced }: UseGameProps) {
   const [session, setSession] = useState<GameSession>(() => ({
     puzzleId: puzzle.id,
     currentGrid: createEmptyGrid(puzzle.size),
@@ -88,6 +89,15 @@ export function useGame({ puzzle, onGameComplete, onGameStateChange }: UseGamePr
           ? prev.elapsedTime + (Date.now() - lastResumeRef.current)
           : undefined,
       };
+
+      // Check if this was the final cell that completed the puzzle
+      const wasIncomplete = !isPuzzleComplete(prev.currentGrid, puzzle.rowClues, puzzle.colClues);
+      const isNowComplete = isComplete;
+      
+      // If puzzle was incomplete and is now complete, this was the final cell
+      if (wasIncomplete && isNowComplete && onFinalCellPlaced) {
+        onFinalCellPlaced();
+      }
 
       // Notify completion
       if (isComplete && onGameComplete) {

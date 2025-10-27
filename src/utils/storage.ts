@@ -89,6 +89,7 @@ function createDefaultProfile(): UserProfile {
         [Category.FOOD]: 0,
         [Category.VEHICLES]: 0,
         [Category.ABSTRACT]: 0,
+        [Category.EDUCATIONAL]: 0,
       },
     },
     achievements: [],

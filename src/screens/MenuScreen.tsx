@@ -1,13 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  SafeAreaView,
-  TouchableOpacity,
-  ScrollView,
-  FlatList,
-  ImageBackground,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, FlatList, ImageBackground } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -177,6 +170,8 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
         return 'car-outline' as const;
       case Category.ABSTRACT:
         return 'shapes-outline' as const;
+      case Category.EDUCATIONAL:
+        return 'school-outline' as const;
       default:
         return 'shapes-outline' as const;
     }
@@ -424,9 +419,9 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
               fontFamily: 'Kenney-Future',
             }}
           >
-            {item.size.width}×{item.size.height}
-          </Text>
-        </View>
+          {item.size.width}×{item.size.height}
+        </Text>
+      </View>
 
         <View
           style={{
@@ -441,11 +436,11 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
               marginBottom: 4,
             }}
           >
-            <Ionicons
-              name={getDifficultyIcon(item.difficulty)}
-              size={16}
-              color={getDifficultyColor(item.difficulty)}
-            />
+          <Ionicons
+            name={getDifficultyIcon(item.difficulty)}
+            size={16}
+            color={getDifficultyColor(item.difficulty)}
+          />
             <Text
               style={{
                 fontSize: 12,
@@ -456,9 +451,9 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
                 fontFamily: 'Kenney-Future',
               }}
             >
-              {item.difficulty}
-            </Text>
-          </View>
+            {item.difficulty}
+          </Text>
+        </View>
 
           <View
             style={{
@@ -481,11 +476,11 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
               {item.category}
             </Text>
           </View>
-        </View>
+      </View>
 
-        <Ionicons name="chevron-forward" size={20} color="#ccc" />
-      </TouchableOpacity>
-    );
+      <Ionicons name="chevron-forward" size={20} color="#ccc" />
+    </TouchableOpacity>
+  );
   };
 
   const renderFilterOptions = () => {
@@ -770,8 +765,11 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
       <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
       <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
 
-      <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
-        {/* Header */}
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: 'transparent' }}
+        edges={['top', 'bottom', 'left', 'right']}
+      >
+      {/* Header */}
         <Animated.View
           style={[
             {
@@ -815,7 +813,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
           <View style={{ padding: 8 }} />
         </Animated.View>
 
-        {/* Filter Tabs */}
+      {/* Filter Tabs */}
         <Animated.View
           style={[
             {
@@ -827,11 +825,11 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
             animatedFilterTabsStyle,
           ]}
         >
-          <TouchableOpacity
-            onPress={() => {
-              setFilterType(FilterType.ALL);
-              setSelectedFilter('all');
-            }}
+        <TouchableOpacity
+          onPress={() => {
+            setFilterType(FilterType.ALL);
+            setSelectedFilter('all');
+          }}
             style={[
               {
                 flex: 1,
@@ -854,17 +852,17 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
                   textAlign: 'center',
                 },
                 filterType === FilterType.ALL && { color: '#fff' },
-              ]}
-            >
-              All
-            </Text>
-          </TouchableOpacity>
+            ]}
+          >
+            All
+          </Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => {
-              setFilterType(FilterType.DIFFICULTY);
-              setSelectedFilter('all');
-            }}
+        <TouchableOpacity
+          onPress={() => {
+            setFilterType(FilterType.DIFFICULTY);
+            setSelectedFilter('all');
+          }}
             style={[
               {
                 flex: 1,
@@ -887,17 +885,17 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
                   textAlign: 'center',
                 },
                 filterType === FilterType.DIFFICULTY && { color: '#fff' },
-              ]}
-            >
-              Difficulty
-            </Text>
-          </TouchableOpacity>
+            ]}
+          >
+            Difficulty
+          </Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => {
-              setFilterType(FilterType.CATEGORY);
-              setSelectedFilter('all');
-            }}
+        <TouchableOpacity
+          onPress={() => {
+            setFilterType(FilterType.CATEGORY);
+            setSelectedFilter('all');
+          }}
             style={[
               {
                 flex: 1,
@@ -920,17 +918,17 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
                   textAlign: 'center',
                 },
                 filterType === FilterType.CATEGORY && { color: '#fff' },
-              ]}
-            >
-              Category
-            </Text>
-          </TouchableOpacity>
+            ]}
+          >
+            Category
+          </Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => {
-              setFilterType(FilterType.SIZE);
-              setSelectedFilter('all');
-            }}
+        <TouchableOpacity
+          onPress={() => {
+            setFilterType(FilterType.SIZE);
+            setSelectedFilter('all');
+          }}
             style={[
               {
                 flex: 1,
@@ -953,15 +951,15 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
                   textAlign: 'center',
                 },
                 filterType === FilterType.SIZE && { color: '#fff' },
-              ]}
-            >
-              Size
-            </Text>
-          </TouchableOpacity>
+            ]}
+          >
+            Size
+          </Text>
+        </TouchableOpacity>
         </Animated.View>
 
-        {/* Filter Options */}
-        {filterType !== FilterType.ALL && (
+      {/* Filter Options */}
+      {filterType !== FilterType.ALL && (
           <Animated.View
             style={[
               {
@@ -975,29 +973,29 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
           >
             {renderFilterOptions()}
           </Animated.View>
-        )}
+      )}
 
-        {/* Puzzles List */}
+      {/* Puzzles List */}
         <Animated.View style={[{ flex: 1 }, animatedListStyle]}>
-          <FlatList
-            data={filteredPuzzles}
-            keyExtractor={item => item.id}
-            renderItem={renderPuzzleItem}
+      <FlatList
+        data={filteredPuzzles}
+        keyExtractor={item => item.id}
+        renderItem={renderPuzzleItem}
             style={{ flex: 1 }}
             contentContainerStyle={{ padding: 16 }}
-            showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               <View
                 style={{
-                  paddingHorizontal: 16,
+    paddingHorizontal: 16,
                   paddingTop: 8,
                 }}
               >
                 <Text
                   style={{
-                    fontSize: 14,
-                    color: '#666',
-                    fontWeight: '500',
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
                     fontFamily: 'Kenney-Future',
                   }}
                 >
@@ -1012,19 +1010,19 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
         <Animated.View
           style={[
             {
-              padding: 16,
-              backgroundColor: '#fff',
-              borderTopWidth: 1,
-              borderTopColor: '#e9ecef',
-              alignItems: 'center',
-            },
+    padding: 16,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+    alignItems: 'center',
+  },
             animatedListStyle,
           ]}
         >
           <Text
             style={{
-              fontSize: 12,
-              color: '#666',
+    fontSize: 12,
+    color: '#666',
               fontFamily: 'Kenney-Future',
             }}
           >

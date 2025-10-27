@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getOrCreateUserProfile, saveUserProfile } from '../utils/storage';
 import DepthFog from '../components/DepthFog';
@@ -44,7 +45,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
       <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
       <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
 
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onBack} style={styles.headerButton}>
             <Ionicons name="arrow-back" size={24} color="#333" />
