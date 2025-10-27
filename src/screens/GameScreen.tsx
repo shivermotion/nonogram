@@ -59,18 +59,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
     let maxAllowedColClues: number;
 
     if (isLargePuzzle) {
-      clueNumberWidth = 18;
-      clueNumberHeight = 16;
+      clueNumberWidth = 16; // Reduced from 18
+      clueNumberHeight = 14; // Reduced from 16
       maxAllowedRowClues = Math.min(theoreticalMaxRow, Math.max(6, actualMaxRowClues));
       maxAllowedColClues = Math.min(theoreticalMaxCol, Math.max(6, actualMaxColClues));
     } else if (isMediumPuzzle) {
-      clueNumberWidth = 22;
-      clueNumberHeight = 18;
+      clueNumberWidth = 18; // Reduced from 22
+      clueNumberHeight = 16; // Reduced from 18
       maxAllowedRowClues = Math.min(theoreticalMaxRow, Math.max(5, actualMaxRowClues));
       maxAllowedColClues = Math.min(theoreticalMaxCol, Math.max(5, actualMaxColClues));
     } else {
-      clueNumberWidth = 25;
-      clueNumberHeight = 20;
+      clueNumberWidth = 20; // Reduced from 25
+      clueNumberHeight = 18; // Reduced from 20
       maxAllowedRowClues = theoreticalMaxRow;
       maxAllowedColClues = theoreticalMaxCol;
     }
@@ -82,11 +82,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   const getOptimalCellSize = useCallback(() => {
     const { clueNumberWidth, clueNumberHeight, maxAllowedRowClues, maxAllowedColClues } =
       clueSizing;
-    const estimatedRowClueWidth = maxAllowedRowClues * clueNumberWidth + 15;
-    const estimatedColClueHeight = maxAllowedColClues * clueNumberHeight + 15;
+    const estimatedRowClueWidth = maxAllowedRowClues * clueNumberWidth + 10; // Reduced from 15
+    const estimatedColClueHeight = maxAllowedColClues * clueNumberHeight + 10; // Reduced from 15
 
     const availableWidth = screenWidth - estimatedRowClueWidth - 40; // margins
-    const availableHeight = screenHeight * 0.6 - estimatedColClueHeight; // info/header area
+    const availableHeight = screenHeight * 0.8 - estimatedColClueHeight; // Increased from 0.75 to 0.8
 
     const baseCellSize = Math.floor(
       Math.min(availableWidth / puzzle.size.width, availableHeight / puzzle.size.height)
@@ -95,17 +95,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
     let minCellSize: number;
     let maxCellSize: number;
     if (puzzle.size.width >= 15 || puzzle.size.height >= 15) {
-      minCellSize = 18;
-      maxCellSize = 30;
+      minCellSize = 20; // Reduced to ensure it fits
+      maxCellSize = Math.min(35, baseCellSize); // Cap at 35px or calculated size
     } else if (puzzle.size.width >= 10 || puzzle.size.height >= 10) {
-      minCellSize = 22;
-      maxCellSize = 35;
+      minCellSize = 25; // Reduced to ensure it fits
+      maxCellSize = Math.min(45, baseCellSize); // Cap at 45px or calculated size
     } else {
-      minCellSize = 28;
-      maxCellSize = 45;
+      minCellSize = 30; // Reduced to ensure it fits
+      maxCellSize = Math.min(55, baseCellSize); // Cap at 55px or calculated size
     }
 
-    return Math.max(minCellSize, Math.min(maxCellSize, baseCellSize));
+    // Ensure the cell size never exceeds what can fit on screen
+    const maxPossibleSize = Math.floor(
+      Math.min(availableWidth / puzzle.size.width, availableHeight / puzzle.size.height)
+    );
+    return Math.max(minCellSize, Math.min(maxCellSize, maxPossibleSize));
   }, [clueSizing, puzzle.size.width, puzzle.size.height]);
 
   const cellSize = getOptimalCellSize();
@@ -113,11 +117,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   // Calculate clue area sizes (same as CluesDisplay) - Smart sizing (shared)
   const { clueNumberWidth, clueNumberHeight, maxAllowedRowClues, maxAllowedColClues } = clueSizing;
   const rowClueWidth = useMemo(
-    () => maxAllowedRowClues * clueNumberWidth + 15,
+    () => maxAllowedRowClues * clueNumberWidth + 10, // Reduced from 15
     [maxAllowedRowClues, clueNumberWidth]
   );
   const colClueHeight = useMemo(
-    () => maxAllowedColClues * clueNumberHeight + 15,
+    () => maxAllowedColClues * clueNumberHeight + 10, // Reduced from 15
     [maxAllowedColClues, clueNumberHeight]
   );
 
@@ -296,23 +300,25 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
           ) : (
             <View style={styles.gameContent}>
               <View style={styles.puzzleLayout}>
-                <CluesDisplay
-                  puzzle={puzzle}
-                  grid={session.currentGrid}
-                  showValidation={true}
-                  cellSize={cellSize}
-                  renderGrid={() => (
-                    <GameGrid
-                      puzzle={puzzle}
-                      grid={session.currentGrid}
-                      onCellPress={handleCellPress}
-                      onCellLongPress={handleCellLongPress}
-                      disabled={!isPlaying}
-                      cellSize={cellSize}
-                      showSolution={showSolution}
-                    />
-                  )}
-                />
+                <View style={styles.gridContainer}>
+                  <CluesDisplay
+                    puzzle={puzzle}
+                    grid={session.currentGrid}
+                    showValidation={true}
+                    cellSize={cellSize}
+                    renderGrid={() => (
+                      <GameGrid
+                        puzzle={puzzle}
+                        grid={session.currentGrid}
+                        onCellPress={handleCellPress}
+                        onCellLongPress={handleCellLongPress}
+                        disabled={!isPlaying}
+                        cellSize={cellSize}
+                        showSolution={showSolution}
+                      />
+                    )}
+                  />
+                </View>
               </View>
             </View>
           )}
@@ -461,6 +467,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     minWidth: '100%',
+    position: 'relative',
   },
   gridContainer: {
     position: 'absolute',
