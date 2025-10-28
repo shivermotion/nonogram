@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getOrCreateUserProfile, saveUserProfile } from '../utils/storage';
+import {
+  getOrCreateUserProfile,
+  saveUserProfile,
+  resetProgress,
+  resetSettingsToDefaults,
+} from '../utils/storage';
 import DepthFog from '../components/DepthFog';
 import LightRays from '../components/LightRays';
 import GridBackground from '../components/GridBackground';
@@ -37,6 +42,60 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
       },
     };
     await saveUserProfile(updated);
+  };
+
+  const handleResetProgress = () => {
+    Alert.alert(
+      'Reset Progress',
+      'This will delete all your puzzle progress and statistics, but will keep your achievements and settings. Are you sure?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await resetProgress();
+              Alert.alert('Success', 'Your progress has been reset!');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to reset progress. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleResetSettings = () => {
+    Alert.alert(
+      'Reset Settings',
+      'This will reset all settings to their default values:\n\n• Sound: ON\n• Vibration: ON\n• Show Timer: ON\n\nYour progress and achievements will be preserved. Continue?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await resetSettingsToDefaults();
+              // Update local state to reflect the changes
+              setSoundEnabled(true);
+              setVibrationEnabled(true);
+              setShowTimer(true);
+              Alert.alert('Success', 'Settings have been reset to defaults!');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to reset settings. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -87,6 +146,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
               }}
             />
           </View>
+
+          <TouchableOpacity style={styles.resetSettingsButton} onPress={handleResetSettings}>
+            <Ionicons name="settings-outline" size={20} color="#6c757d" />
+            <Text style={styles.resetSettingsButtonText}>Reset Settings</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.resetButton} onPress={handleResetProgress}>
+            <Ionicons name="refresh-outline" size={20} color="#dc3545" />
+            <Text style={styles.resetButtonText}>Reset Progress</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     </View>
@@ -120,6 +189,40 @@ const styles = StyleSheet.create({
     borderColor: '#e9ecef',
   },
   rowText: { fontSize: 16, color: '#333', fontWeight: '600' },
+  resetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#dc3545',
+  },
+  resetSettingsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#6c757d',
+  },
+  resetButtonText: {
+    fontSize: 16,
+    color: '#dc3545',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  resetSettingsButtonText: {
+    fontSize: 16,
+    color: '#6c757d',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
 });
 
 export default SettingsScreen;

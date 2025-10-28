@@ -284,3 +284,71 @@ export async function resetAllData(): Promise<void> {
     console.error('Failed to reset data:', error);
   }
 }
+
+// Reset progress while preserving achievements and preferences
+export async function resetProgress(): Promise<void> {
+  try {
+    const profile = await getOrCreateUserProfile();
+    
+    // Reset stats to default values
+    profile.stats = {
+      puzzlesCompleted: 0,
+      totalPlayTime: 0,
+      hintsUsed: 0,
+      averageCompletionTime: 0,
+      bestTime: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      completedByDifficulty: {
+        [Difficulty.EASY]: 0,
+        [Difficulty.MEDIUM]: 0,
+        [Difficulty.HARD]: 0,
+        [Difficulty.EXPERT]: 0,
+      },
+      completedByCategory: {
+        [Category.ANIMALS]: 0,
+        [Category.OBJECTS]: 0,
+        [Category.NATURE]: 0,
+        [Category.FOOD]: 0,
+        [Category.VEHICLES]: 0,
+        [Category.ABSTRACT]: 0,
+        [Category.EDUCATIONAL]: 0,
+      },
+    };
+    
+    // Keep achievements and preferences intact
+    await saveUserProfile(profile);
+    
+    // Clear completed puzzles data
+    await AsyncStorage.removeItem(STORAGE_KEYS.COMPLETED_PUZZLES);
+    
+    // Clear current game session
+    await clearGameSession();
+    
+    console.log('Progress has been reset while preserving achievements');
+  } catch (error) {
+    console.error('Failed to reset progress:', error);
+  }
+}
+
+// Reset settings to default values while preserving everything else
+export async function resetSettingsToDefaults(): Promise<void> {
+  try {
+    const profile = await getOrCreateUserProfile();
+    
+    // Reset preferences to default values
+    profile.preferences = {
+      theme: 'light',
+      soundEnabled: true,
+      vibrationEnabled: true,
+      showTimer: true,
+      autoMarkObvious: false,
+    };
+    
+    await saveUserProfile(profile);
+    
+    console.log('Settings have been reset to defaults');
+  } catch (error) {
+    console.error('Failed to reset settings:', error);
+  }
+}

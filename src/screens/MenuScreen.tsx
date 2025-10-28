@@ -475,7 +475,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
             >
               {item.category}
             </Text>
-          </View>
+        </View>
       </View>
 
       <Ionicons name="chevron-forward" size={20} color="#ccc" />
@@ -841,9 +841,9 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
               },
               filterType === FilterType.ALL && { backgroundColor: '#007AFF' },
             ]}
-          >
-            <Text
-              style={[
+        >
+          <Text
+            style={[
                 {
                   fontSize: 12,
                   fontWeight: '500',
@@ -874,9 +874,9 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
               },
               filterType === FilterType.DIFFICULTY && { backgroundColor: '#007AFF' },
             ]}
-          >
-            <Text
-              style={[
+        >
+          <Text
+            style={[
                 {
                   fontSize: 12,
                   fontWeight: '500',
@@ -907,9 +907,9 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
               },
               filterType === FilterType.CATEGORY && { backgroundColor: '#007AFF' },
             ]}
-          >
-            <Text
-              style={[
+        >
+          <Text
+            style={[
                 {
                   fontSize: 12,
                   fontWeight: '500',
@@ -940,9 +940,9 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
               },
               filterType === FilterType.SIZE && { backgroundColor: '#007AFF' },
             ]}
-          >
-            <Text
-              style={[
+        >
+          <Text
+            style={[
                 {
                   fontSize: 12,
                   fontWeight: '500',
