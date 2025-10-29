@@ -20,6 +20,7 @@ import LightRays from '../components/LightRays';
 import GridBackground from '../components/GridBackground';
 import LevelCompleteOverlay from '../components/LevelCompleteOverlay';
 import { playCompletion, playLevelCompleteMusic } from '../utils/audio';
+import { hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '../utils/haptics';
 
 const windowDimensions = Dimensions.get('window');
 const screenWidth = windowDimensions.width;
@@ -142,7 +143,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   } = useGame({
     puzzle,
     onFinalCellPlaced: async () => {
-      // Play completion sound when final cell is placed
+      // Play completion sound and haptic feedback when final cell is placed
+      hapticSuccess();
       await playCompletion();
     },
     onGameComplete: async completedSession => {
@@ -251,7 +253,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
       <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={() => {
+              hapticLight();
+              onBack();
+            }}
+            style={styles.headerButton}
+          >
             <Image
               source={require('../../assets/kenney_ui-pack/PNG/Blue/Default/arrow_basic_w_small.png')}
               style={{ width: 24, height: 24 }}
@@ -263,7 +271,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
             <Text style={styles.subtitle}>{subtitleText}</Text>
           </View>
 
-          <TouchableOpacity onPress={handlePause} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={() => {
+              hapticLight();
+              handlePause();
+            }}
+            style={styles.headerButton}
+          >
             <Ionicons name={isPlaying ? 'pause' : 'play'} size={24} color="#333" />
           </TouchableOpacity>
         </View>
@@ -293,7 +307,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
           {isPaused ? (
             <View style={styles.pausedOverlay}>
               <Text style={styles.pausedText}>Game Paused</Text>
-              <TouchableOpacity onPress={resumeGame} style={styles.resumeButton}>
+              <TouchableOpacity
+                onPress={() => {
+                  hapticLight();
+                  resumeGame();
+                }}
+                style={styles.resumeButton}
+              >
                 <Text style={styles.resumeButtonText}>Resume</Text>
               </TouchableOpacity>
             </View>
@@ -315,6 +335,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
                         disabled={!isPlaying}
                         cellSize={cellSize}
                         showSolution={showSolution}
+                        inputMode={inputMode}
                       />
                     )}
                   />
@@ -330,7 +351,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
           <View style={styles.modeToggle}>
             <TouchableOpacity
               style={[styles.modeButton, inputMode === InputMode.FILL && styles.modeButtonActive]}
-              onPress={() => setInputMode(InputMode.FILL)}
+              onPress={() => {
+                hapticSelection();
+                setInputMode(InputMode.FILL);
+              }}
             >
               <View style={styles.fillIcon} />
               <Text
@@ -345,7 +369,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
 
             <TouchableOpacity
               style={[styles.modeButton, inputMode === InputMode.MARK && styles.modeButtonActive]}
-              onPress={() => setInputMode(InputMode.MARK)}
+              onPress={() => {
+                hapticSelection();
+                setInputMode(InputMode.MARK);
+              }}
             >
               <Ionicons
                 name="close"
@@ -365,13 +392,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity onPress={handleHint} style={styles.actionButton}>
+            <TouchableOpacity
+              onPress={() => {
+                hapticLight();
+                handleHint();
+              }}
+              style={styles.actionButton}
+            >
               <Ionicons name="help-circle-outline" size={20} color="#007AFF" />
               <Text style={styles.actionButtonText}>Hint</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => setShowSolution(!showSolution)}
+              onPress={() => {
+                hapticLight();
+                setShowSolution(!showSolution);
+              }}
               style={styles.actionButton}
             >
               <Ionicons name="eye-outline" size={20} color={showSolution ? '#FF9500' : '#666'} />
@@ -380,7 +416,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleReset} style={styles.actionButton}>
+            <TouchableOpacity
+              onPress={() => {
+                hapticMedium();
+                handleReset();
+              }}
+              style={styles.actionButton}
+            >
               <Ionicons name="refresh-outline" size={20} color="#FF3B30" />
               <Text style={styles.actionButtonText}>Reset</Text>
             </TouchableOpacity>

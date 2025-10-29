@@ -13,6 +13,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { playClick } from '../utils/audio';
+import { hapticMedium, hapticLight } from '../utils/haptics';
 import DepthFog from '../components/DepthFog';
 import LightRays from '../components/LightRays';
 import GridBackground from '../components/GridBackground';
@@ -215,6 +216,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onOpenSetting
           <Animated.View style={animatedButton1Style}>
             <TouchableOpacity
               onPress={async () => {
+                hapticMedium();
                 await playClick();
                 onStart();
               }}
@@ -262,6 +264,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStart, onOpenSetting
           <Animated.View style={animatedButton2Style}>
             <TouchableOpacity
               onPress={async () => {
+                hapticLight();
                 await playClick();
                 onOpenSettings();
               }}

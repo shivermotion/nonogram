@@ -8,6 +8,13 @@ import {
   resetProgress,
   resetSettingsToDefaults,
 } from '../utils/storage';
+import {
+  hapticLight,
+  hapticSelection,
+  hapticMedium,
+  hapticError,
+  clearHapticCache,
+} from '../utils/haptics';
 import DepthFog from '../components/DepthFog';
 import LightRays from '../components/LightRays';
 import GridBackground from '../components/GridBackground';
@@ -106,7 +113,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
 
       <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={() => {
+              hapticLight();
+              onBack();
+            }}
+            style={styles.headerButton}
+          >
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
           <Text style={styles.title}>Settings</Text>
@@ -119,6 +132,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             <Switch
               value={soundEnabled}
               onValueChange={async v => {
+                hapticSelection();
                 setSoundEnabled(v);
                 await persist({ soundEnabled: v });
               }}
@@ -130,8 +144,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             <Switch
               value={vibrationEnabled}
               onValueChange={async v => {
+                hapticSelection();
                 setVibrationEnabled(v);
                 await persist({ vibrationEnabled: v });
+                clearHapticCache(); // Clear cache when vibration preference changes
               }}
             />
           </View>
@@ -141,18 +157,31 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             <Switch
               value={showTimer}
               onValueChange={async v => {
+                hapticSelection();
                 setShowTimer(v);
                 await persist({ showTimer: v });
               }}
             />
           </View>
 
-          <TouchableOpacity style={styles.resetSettingsButton} onPress={handleResetSettings}>
+          <TouchableOpacity
+            style={styles.resetSettingsButton}
+            onPress={() => {
+              hapticMedium();
+              handleResetSettings();
+            }}
+          >
             <Ionicons name="settings-outline" size={20} color="#6c757d" />
             <Text style={styles.resetSettingsButtonText}>Reset Settings</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.resetButton} onPress={handleResetProgress}>
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={() => {
+              hapticError();
+              handleResetProgress();
+            }}
+          >
             <Ionicons name="refresh-outline" size={20} color="#dc3545" />
             <Text style={styles.resetButtonText}>Reset Progress</Text>
           </TouchableOpacity>

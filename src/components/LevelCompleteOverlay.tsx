@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Dimensions, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, Dimensions, TouchableOpacity, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,8 +9,59 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import AnimatedPuzzlePreview from './AnimatedPuzzlePreview';
+import { hapticMedium, hapticLight } from '../utils/haptics';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Icon Components using PNG assets
+const ArrowRightIcon: React.FC<{ size: number }> = ({ size }) => (
+  <Image
+    source={require('../../assets/icons/arrow_right.png')}
+    style={{ width: size, height: size }}
+    resizeMode="contain"
+  />
+);
+
+const RefreshIcon: React.FC<{ size: number }> = ({ size }) => (
+  <Image
+    source={require('../../assets/icons/undo.png')}
+    style={{ width: size, height: size }}
+    resizeMode="contain"
+  />
+);
+
+const BlueButton: React.FC<{
+  onPress: () => void;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  style?: any;
+}> = ({ onPress, children, icon, style }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    style={[
+      {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#167DA8',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 12,
+        shadowColor: '#167DA8',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 8,
+        elevation: 8,
+        borderWidth: 2,
+        borderColor: '#1C9FD7',
+      },
+      style,
+    ]}
+  >
+    {icon && <View style={{ marginRight: 8 }}>{icon}</View>}
+    {children}
+  </TouchableOpacity>
+);
 
 interface LevelCompleteOverlayProps {
   puzzle: any;
@@ -172,6 +222,25 @@ export const LevelCompleteOverlay: React.FC<LevelCompleteOverlayProps> = ({
         overlayStyle,
       ]}
     >
+      <Animated.Text
+        style={[
+          {
+            fontSize: 24,
+            fontWeight: '600',
+            color: '#FFD700',
+            textAlign: 'center',
+            marginBottom: 10,
+            fontFamily: 'Kenney-Future',
+            textShadowColor: 'rgba(0, 0, 0, 0.5)',
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 2,
+          },
+          previewStyle,
+        ]}
+      >
+        {puzzle.name}
+      </Animated.Text>
+
       <Animated.View
         style={[
           {
@@ -205,26 +274,7 @@ export const LevelCompleteOverlay: React.FC<LevelCompleteOverlayProps> = ({
           titleStyle,
         ]}
       >
-        Level Complete!
-      </Animated.Text>
-
-      <Animated.Text
-        style={[
-          {
-            fontSize: 24,
-            fontWeight: '600',
-            color: '#fff',
-            textAlign: 'center',
-            marginTop: 10,
-            fontFamily: 'Kenney-Future',
-            textShadowColor: 'rgba(0, 0, 0, 0.5)',
-            textShadowOffset: { width: 1, height: 1 },
-            textShadowRadius: 2,
-          },
-          titleStyle,
-        ]}
-      >
-        {puzzle.name}
+        Complete!
       </Animated.Text>
 
       {/* Stats */}
@@ -243,15 +293,27 @@ export const LevelCompleteOverlay: React.FC<LevelCompleteOverlayProps> = ({
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            marginRight: 30,
+            backgroundColor: 'rgba(54, 189, 247, 0.2)',
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 8,
+            marginRight: 20,
+            borderWidth: 1,
+            borderColor: '#36BDF7',
           }}
         >
-          <Ionicons name="time-outline" size={24} color="#FFD700" />
+          <View style={{ width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}>
+            <Image
+              source={require('../../assets/icons/target.png')}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+            />
+          </View>
           <Text
             style={{
               fontSize: 18,
               fontWeight: '600',
-              color: '#fff',
+              color: '#36BDF7',
               marginLeft: 8,
               fontFamily: 'Kenney-Future',
             }}
@@ -264,14 +326,26 @@ export const LevelCompleteOverlay: React.FC<LevelCompleteOverlayProps> = ({
           style={{
             flexDirection: 'row',
             alignItems: 'center',
+            backgroundColor: 'rgba(54, 189, 247, 0.2)',
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: '#36BDF7',
           }}
         >
-          <Ionicons name="bulb-outline" size={24} color="#FFD700" />
+          <View style={{ width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}>
+            <Image
+              source={require('../../assets/icons/question_mark.png')}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+            />
+          </View>
           <Text
             style={{
               fontSize: 18,
               fontWeight: '600',
-              color: '#fff',
+              color: '#36BDF7',
               marginLeft: 8,
               fontFamily: 'Kenney-Future',
             }}
@@ -293,65 +367,47 @@ export const LevelCompleteOverlay: React.FC<LevelCompleteOverlayProps> = ({
           buttonsStyle,
         ]}
       >
-        <TouchableOpacity
-          onPress={onContinue}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: '#007AFF',
-            paddingHorizontal: 24,
-            paddingVertical: 12,
-            borderRadius: 12,
-            shadowColor: '#007AFF',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            elevation: 8,
+        <BlueButton
+          onPress={() => {
+            hapticMedium();
+            onContinue();
           }}
+          icon={<ArrowRightIcon size={20} />}
         >
-          <Ionicons name="chevron-forward-outline" size={20} color="#fff" />
           <Text
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: '#fff',
-              marginLeft: 8,
+              color: '#FFFFFF',
               fontFamily: 'Kenney-Future',
             }}
           >
             Continue
           </Text>
-        </TouchableOpacity>
+        </BlueButton>
 
-        <TouchableOpacity
-          onPress={onReplay}
+        <BlueButton
+          onPress={() => {
+            hapticLight();
+            onReplay();
+          }}
+          icon={<RefreshIcon size={20} />}
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: '#FF3B30',
-            paddingHorizontal: 24,
-            paddingVertical: 12,
-            borderRadius: 12,
-            shadowColor: '#FF3B30',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            elevation: 8,
+            backgroundColor: '#1C9FD7',
+            borderColor: '#36BDF7',
           }}
         >
-          <Ionicons name="refresh-outline" size={20} color="#fff" />
           <Text
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: '#fff',
-              marginLeft: 8,
+              color: '#FFFFFF',
               fontFamily: 'Kenney-Future',
             }}
           >
             Replay
           </Text>
-        </TouchableOpacity>
+        </BlueButton>
       </Animated.View>
     </Animated.View>
   );

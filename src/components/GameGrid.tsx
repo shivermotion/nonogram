@@ -14,6 +14,8 @@ import {
 } from 'react-native-gesture-handler';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { CellState, Position, NonogramPuzzle } from '../types/game';
+import { hapticLight, hapticMedium } from '../utils/haptics';
+import StoneChipParticles, { StoneChipParticlesRef } from './StoneChipParticles';
 
 const windowDimensions = Dimensions.get('window');
 const screenWidth = windowDimensions.width;
@@ -182,6 +184,7 @@ interface GameGridProps {
   showErrors?: boolean;
   cellSize?: number;
   showSolution?: boolean;
+  inputMode?: 'fill' | 'mark'; // To determine if we're filling or marking
 }
 
 export const GameGrid: React.FC<GameGridProps> = ({
@@ -193,6 +196,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
   showErrors = false,
   cellSize: propCellSize,
   showSolution = false,
+  inputMode = 'fill',
 }) => {
   const { size } = puzzle;
   const isDraggingRef = useRef(false);
@@ -201,6 +205,8 @@ export const GameGrid: React.FC<GameGridProps> = ({
   const [animatingCells, setAnimatingCells] = useState<Set<string>>(new Set());
   const prevCellRef = useRef<{ row: number; col: number } | null>(null);
   const gridSizeRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
+  const gridContainerRef = useRef<View>(null);
+  const particlesRef = useRef<StoneChipParticlesRef>(null);
 
   const getCellFromLocal = (x: number, y: number) => {
     const { width, height } = gridSizeRef.current;
@@ -266,51 +272,92 @@ export const GameGrid: React.FC<GameGridProps> = ({
     return baseStyle;
   };
 
+  const spawnParticlesAtCell = useCallback(
+    (rowIndex: number, colIndex: number) => {
+      if (!gridContainerRef.current || !particlesRef.current) {
+        console.log('Cannot spawn particles: missing refs');
+        return;
+      }
+
+      // Calculate cell center position relative to the grid container
+      // The particles container is positioned absolutely within GameGrid container
+      // So we need coordinates relative to that container
+      const cellX = (colIndex + 0.5) * cellSize;
+      const cellY = (rowIndex + 0.5) * cellSize;
+
+      console.log('Spawning particles at cell:', { cellX, cellY, rowIndex, colIndex, cellSize });
+
+      // Spawn particles at cell center
+      if (particlesRef.current) {
+        particlesRef.current.spawnParticles(cellX, cellY);
+      }
+    },
+    [cellSize]
+  );
+
   const renderRow = (rowIndex: number) => {
     return (
       <View key={rowIndex} style={styles.row}>
-        {Array.from({ length: size.width }).map((_, colIndex) => (
-          <TouchableOpacity
-            key={`${rowIndex}-${colIndex}`}
-            style={getCellStyle(rowIndex, colIndex)}
-            onPress={() => {
-              if (!disabled) {
-                console.log('tap cell', { row: rowIndex, col: colIndex });
-                const cellKey = `${rowIndex}-${colIndex}`;
+        {Array.from({ length: size.width }).map((_, colIndex) => {
+          const wasFilled = grid[rowIndex][colIndex] === CellState.FILLED;
 
-                // Add to animating cells
-                setAnimatingCells(prev => new Set(prev).add(cellKey));
+          return (
+            <TouchableOpacity
+              key={`${rowIndex}-${colIndex}`}
+              style={getCellStyle(rowIndex, colIndex)}
+              onPress={event => {
+                if (!disabled) {
+                  console.log('tap cell', { row: rowIndex, col: colIndex });
+                  hapticLight(); // Haptic feedback for cell tap
+                  const cellKey = `${rowIndex}-${colIndex}`;
 
-                // Remove from animating cells after animation completes
-                setTimeout(() => {
-                  setAnimatingCells(prev => {
-                    const newSet = new Set(prev);
-                    newSet.delete(cellKey);
-                    return newSet;
-                  });
-                }, 300);
+                  // Check if we're filling and the cell will become filled
+                  const willBeFilled = inputMode === 'fill' && !wasFilled;
 
-                onCellPress({ row: rowIndex, col: colIndex });
-              }
-            }}
-            onLongPress={() => !disabled && onCellLongPress?.({ row: rowIndex, col: colIndex })}
-            activeOpacity={disabled ? 1 : 0.7}
-            disabled={disabled}
-          >
-            {grid[rowIndex][colIndex] === CellState.FILLED &&
-              (animatingCells.has(`${rowIndex}-${colIndex}`) ? (
-                <AnimatedCellIcon
-                  rowIndex={rowIndex}
-                  colIndex={colIndex}
-                  cellSize={cellSize}
-                  isAnimating={true}
-                />
-              ) : (
-                <GradientButtonIcon size={cellSize} />
-              ))}
-            {grid[rowIndex][colIndex] === CellState.MARKED && <CrossIcon size={cellSize * 0.6} />}
-          </TouchableOpacity>
-        ))}
+                  // Add to animating cells
+                  setAnimatingCells(prev => new Set(prev).add(cellKey));
+
+                  // Remove from animating cells after animation completes
+                  setTimeout(() => {
+                    setAnimatingCells(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(cellKey);
+                      return newSet;
+                    });
+                  }, 300);
+
+                  // Spawn particles if filling a cell (optimistic - spawn immediately)
+                  if (willBeFilled) {
+                    spawnParticlesAtCell(rowIndex, colIndex);
+                  }
+
+                  onCellPress({ row: rowIndex, col: colIndex });
+                }
+              }}
+              onLongPress={() => {
+                if (!disabled) {
+                  hapticMedium(); // Haptic feedback for long press (toggle)
+                  onCellLongPress?.({ row: rowIndex, col: colIndex });
+                }
+              }}
+              activeOpacity={disabled ? 1 : 0.7}
+              disabled={disabled}
+            >
+              {grid[rowIndex][colIndex] === CellState.FILLED &&
+                (animatingCells.has(`${rowIndex}-${colIndex}`) ? (
+                  <AnimatedCellIcon
+                    rowIndex={rowIndex}
+                    colIndex={colIndex}
+                    cellSize={cellSize}
+                    isAnimating={true}
+                  />
+                ) : (
+                  <GradientButtonIcon size={cellSize} />
+                ))}
+              {grid[rowIndex][colIndex] === CellState.MARKED && <CrossIcon size={cellSize * 0.6} />}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     );
   };
@@ -321,7 +368,12 @@ export const GameGrid: React.FC<GameGridProps> = ({
       const key = `${r}-${c}`;
       if (!visitedCellsRef.current.has(key)) {
         visitedCellsRef.current.add(key);
+        hapticLight(); // Haptic feedback for drag cell interaction
         console.log('processCell (drag)', { row: r, col: c });
+
+        const wasFilled = grid[r][c] === CellState.FILLED;
+        const willBeFilled = inputMode === 'fill' && !wasFilled;
+
         const cellKey = `${r}-${c}`;
         setAnimatingCells(prev => new Set(prev).add(cellKey));
         setTimeout(() => {
@@ -331,10 +383,16 @@ export const GameGrid: React.FC<GameGridProps> = ({
             return next;
           });
         }, 300);
+
+        // Spawn particles if filling during drag - always from cell center
+        if (willBeFilled) {
+          spawnParticlesAtCell(r, c);
+        }
+
         onCellPress({ row: r, col: c });
       }
     },
-    [onCellPress, size.height, size.width]
+    [onCellPress, size.height, size.width, grid, inputMode, spawnParticlesAtCell]
   );
 
   const handlePanEvent = useCallback(
@@ -400,6 +458,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
       onHandlerStateChange={handlePanStateChange}
     >
       <View
+        ref={gridContainerRef}
         style={styles.grid}
         onLayout={e => {
           const { width, height } = e.nativeEvent.layout;
@@ -422,6 +481,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
       ]}
     >
       {gridContent}
+      <StoneChipParticles ref={particlesRef} />
     </View>
   );
 };
@@ -432,6 +492,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
     padding: 2,
     borderRadius: 4,
+    overflow: 'visible', // Allow particles to overflow container
   },
   grid: {
     backgroundColor: '#fff',
