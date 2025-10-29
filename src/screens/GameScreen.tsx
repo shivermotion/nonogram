@@ -3,16 +3,24 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Alert,
   Dimensions,
+  ImageBackground,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
 import { NonogramPuzzle, CellState, Position } from '../types/game';
 import { useGame } from '../hooks/useGame';
 import GameGrid from '../components/GameGrid';
 import CluesDisplay from '../components/CluesDisplay';
+import DepthFog from '../components/DepthFog';
+import LightRays from '../components/LightRays';
+import GridBackground from '../components/GridBackground';
+import LevelCompleteOverlay from '../components/LevelCompleteOverlay';
+import { playCompletion, playLevelCompleteMusic } from '../utils/audio';
+import { hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '../utils/haptics';
 
 const windowDimensions = Dimensions.get('window');
 const screenWidth = windowDimensions.width;
@@ -33,9 +41,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   const [inputMode, setInputMode] = useState<InputMode>(InputMode.FILL);
   const [showSolution, setShowSolution] = useState(false);
   const [displayTick, setDisplayTick] = useState(0);
-  const [showCompleted, setShowCompleted] = useState(false);
   const [completedTime, setCompletedTime] = useState<number>(0);
   const [completedHints, setCompletedHints] = useState<number>(0);
+  const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
 
   // Clue sizing calculation (shared) to avoid duplication
   const clueSizing = useMemo(() => {
@@ -52,18 +60,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
     let maxAllowedColClues: number;
 
     if (isLargePuzzle) {
-      clueNumberWidth = 18;
-      clueNumberHeight = 16;
+      clueNumberWidth = 16; // Reduced from 18
+      clueNumberHeight = 14; // Reduced from 16
       maxAllowedRowClues = Math.min(theoreticalMaxRow, Math.max(6, actualMaxRowClues));
       maxAllowedColClues = Math.min(theoreticalMaxCol, Math.max(6, actualMaxColClues));
     } else if (isMediumPuzzle) {
-      clueNumberWidth = 22;
-      clueNumberHeight = 18;
+      clueNumberWidth = 18; // Reduced from 22
+      clueNumberHeight = 16; // Reduced from 18
       maxAllowedRowClues = Math.min(theoreticalMaxRow, Math.max(5, actualMaxRowClues));
       maxAllowedColClues = Math.min(theoreticalMaxCol, Math.max(5, actualMaxColClues));
     } else {
-      clueNumberWidth = 25;
-      clueNumberHeight = 20;
+      clueNumberWidth = 20; // Reduced from 25
+      clueNumberHeight = 18; // Reduced from 20
       maxAllowedRowClues = theoreticalMaxRow;
       maxAllowedColClues = theoreticalMaxCol;
     }
@@ -75,11 +83,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   const getOptimalCellSize = useCallback(() => {
     const { clueNumberWidth, clueNumberHeight, maxAllowedRowClues, maxAllowedColClues } =
       clueSizing;
-    const estimatedRowClueWidth = maxAllowedRowClues * clueNumberWidth + 15;
-    const estimatedColClueHeight = maxAllowedColClues * clueNumberHeight + 15;
+    const estimatedRowClueWidth = maxAllowedRowClues * clueNumberWidth + 10; // Reduced from 15
+    const estimatedColClueHeight = maxAllowedColClues * clueNumberHeight + 10; // Reduced from 15
 
     const availableWidth = screenWidth - estimatedRowClueWidth - 40; // margins
-    const availableHeight = screenHeight * 0.6 - estimatedColClueHeight; // info/header area
+    const availableHeight = screenHeight * 0.8 - estimatedColClueHeight; // Increased from 0.75 to 0.8
 
     const baseCellSize = Math.floor(
       Math.min(availableWidth / puzzle.size.width, availableHeight / puzzle.size.height)
@@ -88,17 +96,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
     let minCellSize: number;
     let maxCellSize: number;
     if (puzzle.size.width >= 15 || puzzle.size.height >= 15) {
-      minCellSize = 18;
-      maxCellSize = 30;
+      minCellSize = 20; // Reduced to ensure it fits
+      maxCellSize = Math.min(35, baseCellSize); // Cap at 35px or calculated size
     } else if (puzzle.size.width >= 10 || puzzle.size.height >= 10) {
-      minCellSize = 22;
-      maxCellSize = 35;
+      minCellSize = 25; // Reduced to ensure it fits
+      maxCellSize = Math.min(45, baseCellSize); // Cap at 45px or calculated size
     } else {
-      minCellSize = 28;
-      maxCellSize = 45;
+      minCellSize = 30; // Reduced to ensure it fits
+      maxCellSize = Math.min(55, baseCellSize); // Cap at 55px or calculated size
     }
 
-    return Math.max(minCellSize, Math.min(maxCellSize, baseCellSize));
+    // Ensure the cell size never exceeds what can fit on screen
+    const maxPossibleSize = Math.floor(
+      Math.min(availableWidth / puzzle.size.width, availableHeight / puzzle.size.height)
+    );
+    return Math.max(minCellSize, Math.min(maxCellSize, maxPossibleSize));
   }, [clueSizing, puzzle.size.width, puzzle.size.height]);
 
   const cellSize = getOptimalCellSize();
@@ -106,11 +118,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   // Calculate clue area sizes (same as CluesDisplay) - Smart sizing (shared)
   const { clueNumberWidth, clueNumberHeight, maxAllowedRowClues, maxAllowedColClues } = clueSizing;
   const rowClueWidth = useMemo(
-    () => maxAllowedRowClues * clueNumberWidth + 15,
+    () => maxAllowedRowClues * clueNumberWidth + 10, // Reduced from 15
     [maxAllowedRowClues, clueNumberWidth]
   );
   const colClueHeight = useMemo(
-    () => maxAllowedColClues * clueNumberHeight + 15,
+    () => maxAllowedColClues * clueNumberHeight + 10, // Reduced from 15
     [maxAllowedColClues, clueNumberHeight]
   );
 
@@ -130,10 +142,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
     hintsUsed,
   } = useGame({
     puzzle,
-    onGameComplete: completedSession => {
+    onFinalCellPlaced: async () => {
+      // Play completion sound and haptic feedback when final cell is placed
+      hapticSuccess();
+      await playCompletion();
+    },
+    onGameComplete: async completedSession => {
+      // Play level complete music
+      await playLevelCompleteMusic();
+
+      // Show level complete overlay after a delay
+      setTimeout(() => {
+        setShowLevelCompleteOverlay(true);
+      }, 500);
+
       setCompletedTime(completedSession.elapsedTime);
       setCompletedHints(completedSession.hintsUsed);
-      setShowCompleted(true);
     },
   });
 
@@ -151,6 +175,20 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleCompletionAnimationFinish = () => {
+    // Animation complete - overlay now handles everything
+  };
+
+  const handleContinue = () => {
+    setShowLevelCompleteOverlay(false);
+    onComplete?.(puzzle, completedTime, completedHints);
+  };
+
+  const handleReplay = () => {
+    setShowLevelCompleteOverlay(false);
+    resetGame();
   };
 
   const handleCellPress = useCallback(
@@ -207,175 +245,209 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   }, [isPlaying, isPaused, pauseGame, resumeGame]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: '#F8F9FF' }}>
+      <DepthFog visible intensity={0.1} color="#2D1B3D" />
+      <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
+      <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
 
-        <View style={styles.headerCenter}>
-          <Text style={styles.title}>{puzzle.name}</Text>
-          <Text style={styles.subtitle}>{subtitleText}</Text>
-        </View>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => {
+              hapticLight();
+              onBack();
+            }}
+            style={styles.headerButton}
+          >
+            <Image
+              source={require('../../assets/kenney_ui-pack/PNG/Blue/Default/arrow_basic_w_small.png')}
+              style={{ width: 24, height: 24 }}
+            />
+          </TouchableOpacity>
 
-        <TouchableOpacity onPress={handlePause} style={styles.headerButton}>
-          <Ionicons name={isPlaying ? 'pause' : 'play'} size={24} color="#333" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Game Info */}
-      <View style={styles.gameInfo}>
-        <View style={styles.infoItem}>
-          <Ionicons name="time-outline" size={16} color="#666" />
-          <Text style={styles.infoText} key={displayTick}>
-            {formatTime(getElapsedTime())}
-          </Text>
-        </View>
-
-        <View style={styles.infoItem}>
-          <Ionicons name="help-circle-outline" size={16} color="#666" />
-          <Text style={styles.infoText}>{hintsUsed}</Text>
-        </View>
-
-        <View style={styles.infoItem}>
-          <Ionicons name="checkmark-circle-outline" size={16} color="#666" />
-          <Text style={styles.infoText}>{filledCount}</Text>
-        </View>
-      </View>
-
-      {/* Game Area */}
-      <View style={styles.gameArea}>
-        {isPaused ? (
-          <View style={styles.pausedOverlay}>
-            <Text style={styles.pausedText}>Game Paused</Text>
-            <TouchableOpacity onPress={resumeGame} style={styles.resumeButton}>
-              <Text style={styles.resumeButtonText}>Resume</Text>
-            </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.title}>{puzzle.name}</Text>
+            <Text style={styles.subtitle}>{subtitleText}</Text>
           </View>
-        ) : showCompleted ? (
-          <View style={styles.pausedOverlay}>
-            <Text style={styles.pausedText}>Level Completed!</Text>
-            <Text style={styles.subtitle}>Time: {formatTime(completedTime)}</Text>
-            <Text style={styles.subtitle}>Hints: {completedHints}</Text>
-            <View style={styles.actionButtons}>
+
+          <TouchableOpacity
+            onPress={() => {
+              hapticLight();
+              handlePause();
+            }}
+            style={styles.headerButton}
+          >
+            <Ionicons name={isPlaying ? 'pause' : 'play'} size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Game Info */}
+        <View style={styles.gameInfo}>
+          <View style={styles.infoItem}>
+            <Ionicons name="time-outline" size={16} color="#666" />
+            <Text style={styles.infoText} key={displayTick}>
+              {formatTime(getElapsedTime())}
+            </Text>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Ionicons name="help-circle-outline" size={16} color="#666" />
+            <Text style={styles.infoText}>{hintsUsed}</Text>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Ionicons name="checkmark-circle-outline" size={16} color="#666" />
+            <Text style={styles.infoText}>{filledCount}</Text>
+          </View>
+        </View>
+
+        {/* Game Area */}
+        <View style={styles.gameArea}>
+          {isPaused ? (
+            <View style={styles.pausedOverlay}>
+              <Text style={styles.pausedText}>Game Paused</Text>
               <TouchableOpacity
                 onPress={() => {
-                  setShowCompleted(false);
-                  onComplete?.(puzzle, completedTime, completedHints);
+                  hapticLight();
+                  resumeGame();
                 }}
-                style={styles.actionButton}
+                style={styles.resumeButton}
               >
-                <Ionicons name="chevron-forward-outline" size={20} color="#007AFF" />
-                <Text style={styles.actionButtonText}>Continue</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setShowCompleted(false);
-                  resetGame();
-                }}
-                style={styles.actionButton}
-              >
-                <Ionicons name="refresh-outline" size={20} color="#007AFF" />
-                <Text style={styles.actionButtonText}>Replay</Text>
+                <Text style={styles.resumeButtonText}>Resume</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        ) : (
-          <View style={styles.gameContent}>
-            <View style={styles.puzzleLayout}>
-              <CluesDisplay
-                puzzle={puzzle}
-                grid={session.currentGrid}
-                showValidation={true}
-                cellSize={cellSize}
-                renderGrid={() => (
-                  <GameGrid
+          ) : (
+            <View style={styles.gameContent}>
+              <View style={styles.puzzleLayout}>
+                <View style={styles.gridContainer}>
+                  <CluesDisplay
                     puzzle={puzzle}
                     grid={session.currentGrid}
-                    onCellPress={handleCellPress}
-                    onCellLongPress={handleCellLongPress}
-                    disabled={!isPlaying}
+                    showValidation={true}
                     cellSize={cellSize}
-                    showSolution={showSolution}
+                    renderGrid={() => (
+                      <GameGrid
+                        puzzle={puzzle}
+                        grid={session.currentGrid}
+                        onCellPress={handleCellPress}
+                        onCellLongPress={handleCellLongPress}
+                        disabled={!isPlaying}
+                        cellSize={cellSize}
+                        showSolution={showSolution}
+                        inputMode={inputMode}
+                      />
+                    )}
                   />
-                )}
-              />
+                </View>
+              </View>
             </View>
+          )}
+        </View>
+
+        {/* Controls */}
+        <View style={styles.controls}>
+          {/* Input Mode Toggle */}
+          <View style={styles.modeToggle}>
+            <TouchableOpacity
+              style={[styles.modeButton, inputMode === InputMode.FILL && styles.modeButtonActive]}
+              onPress={() => {
+                hapticSelection();
+                setInputMode(InputMode.FILL);
+              }}
+            >
+              <View style={styles.fillIcon} />
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  inputMode === InputMode.FILL && styles.modeButtonTextActive,
+                ]}
+              >
+                Fill
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modeButton, inputMode === InputMode.MARK && styles.modeButtonActive]}
+              onPress={() => {
+                hapticSelection();
+                setInputMode(InputMode.MARK);
+              }}
+            >
+              <Ionicons
+                name="close"
+                size={16}
+                color={inputMode === InputMode.MARK ? '#fff' : '#666'}
+              />
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  inputMode === InputMode.MARK && styles.modeButtonTextActive,
+                ]}
+              >
+                Mark
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
-      </View>
 
-      {/* Controls */}
-      <View style={styles.controls}>
-        {/* Input Mode Toggle */}
-        <View style={styles.modeToggle}>
-          <TouchableOpacity
-            style={[styles.modeButton, inputMode === InputMode.FILL && styles.modeButtonActive]}
-            onPress={() => setInputMode(InputMode.FILL)}
-          >
-            <View style={styles.fillIcon} />
-            <Text
-              style={[
-                styles.modeButtonText,
-                inputMode === InputMode.FILL && styles.modeButtonTextActive,
-              ]}
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              onPress={() => {
+                hapticLight();
+                handleHint();
+              }}
+              style={styles.actionButton}
             >
-              Fill
-            </Text>
-          </TouchableOpacity>
+              <Ionicons name="help-circle-outline" size={20} color="#007AFF" />
+              <Text style={styles.actionButtonText}>Hint</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.modeButton, inputMode === InputMode.MARK && styles.modeButtonActive]}
-            onPress={() => setInputMode(InputMode.MARK)}
-          >
-            <Ionicons
-              name="close"
-              size={16}
-              color={inputMode === InputMode.MARK ? '#fff' : '#666'}
-            />
-            <Text
-              style={[
-                styles.modeButtonText,
-                inputMode === InputMode.MARK && styles.modeButtonTextActive,
-              ]}
+            <TouchableOpacity
+              onPress={() => {
+                hapticLight();
+                setShowSolution(!showSolution);
+              }}
+              style={styles.actionButton}
             >
-              Mark
-            </Text>
-          </TouchableOpacity>
+              <Ionicons name="eye-outline" size={20} color={showSolution ? '#FF9500' : '#666'} />
+              <Text style={[styles.actionButtonText, { color: showSolution ? '#FF9500' : '#333' }]}>
+                Debug
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                hapticMedium();
+                handleReset();
+              }}
+              style={styles.actionButton}
+            >
+              <Ionicons name="refresh-outline" size={20} color="#FF3B30" />
+              <Text style={styles.actionButtonText}>Reset</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity onPress={handleHint} style={styles.actionButton}>
-            <Ionicons name="help-circle-outline" size={20} color="#007AFF" />
-            <Text style={styles.actionButtonText}>Hint</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setShowSolution(!showSolution)}
-            style={styles.actionButton}
-          >
-            <Ionicons name="eye-outline" size={20} color={showSolution ? '#FF9500' : '#666'} />
-            <Text style={[styles.actionButtonText, { color: showSolution ? '#FF9500' : '#333' }]}>
-              Debug
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleReset} style={styles.actionButton}>
-            <Ionicons name="refresh-outline" size={20} color="#FF3B30" />
-            <Text style={styles.actionButtonText}>Reset</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
+        {/* Level Complete Overlay */}
+        <LevelCompleteOverlay
+          puzzle={puzzle}
+          visible={showLevelCompleteOverlay}
+          completedTime={completedTime}
+          completedHints={completedHints}
+          onContinue={handleContinue}
+          onReplay={handleReplay}
+          onAnimationComplete={handleCompletionAnimationFinish}
+        />
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
@@ -437,6 +509,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     minWidth: '100%',
+    position: 'relative',
   },
   gridContainer: {
     position: 'absolute',

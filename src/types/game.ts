@@ -24,6 +24,7 @@ export enum Category {
   FOOD = 'food',
   VEHICLES = 'vehicles',
   ABSTRACT = 'abstract',
+  EDUCATIONAL = 'educational',
 }
 
 export type GridSize = {

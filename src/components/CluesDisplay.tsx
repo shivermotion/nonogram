@@ -174,9 +174,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    borderWidth: 2,
-    borderColor: 'blue',
-    backgroundColor: 'rgba(0, 0, 255, 0.1)',
+    backgroundColor: 'transparent',
   },
   topRow: {
     flexDirection: 'row',
