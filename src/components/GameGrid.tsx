@@ -57,6 +57,30 @@ const CrossIcon: React.FC<{ size: number }> = ({ size }) => (
   </Svg>
 );
 
+const AnimatedMarkIcon: React.FC<{ size: number }> = ({ size }) => {
+  const scale = useSharedValue(0.6);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    scale.value = withSequence(
+      withTiming(1.05, { duration: 120 }),
+      withTiming(1, { duration: 100 })
+    );
+    opacity.value = withTiming(1, { duration: 180 });
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View style={style}>
+      <CrossIcon size={size} />
+    </Animated.View>
+  );
+};
+
 const FlatButtonIcon: React.FC<{ size: number }> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 64 64">
     <Path
@@ -354,7 +378,9 @@ export const GameGrid: React.FC<GameGridProps> = ({
                 ) : (
                   <GradientButtonIcon size={cellSize} />
                 ))}
-              {grid[rowIndex][colIndex] === CellState.MARKED && <CrossIcon size={cellSize * 0.6} />}
+              {grid[rowIndex][colIndex] === CellState.MARKED && (
+                <AnimatedMarkIcon size={cellSize * 0.6} />
+              )}
             </TouchableOpacity>
           );
         })}

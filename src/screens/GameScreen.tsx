@@ -29,6 +29,7 @@ import GridBackground from '../components/GridBackground';
 import LevelCompleteOverlay from '../components/LevelCompleteOverlay';
 import { playCompletion, playLevelCompleteMusic } from '../utils/audio';
 import { hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '../utils/haptics';
+import { isPuzzleCompleted } from '../utils/storage';
 
 const windowDimensions = Dimensions.get('window');
 const screenWidth = windowDimensions.width;
@@ -52,6 +53,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   const [completedTime, setCompletedTime] = useState<number>(0);
   const [completedHints, setCompletedHints] = useState<number>(0);
   const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
+  const [hasCompletedBefore, setHasCompletedBefore] = useState(false);
 
   // Pause overlay animation values
   const pauseOverlayOpacity = useSharedValue(0);
@@ -176,6 +178,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
       setCompletedHints(completedSession.hintsUsed);
     },
   });
+
+  // Determine if this puzzle was previously completed to decide header title visibility
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const completed = await isPuzzleCompleted(puzzle.id);
+        if (mounted) setHasCompletedBefore(!!completed);
+      } catch (e) {
+        // noop on error
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [puzzle.id]);
 
   // Local UI tick to refresh the timer text while playing
   useEffect(() => {
@@ -356,7 +374,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
-            <Text style={styles.title}>{puzzle.name}</Text>
+            <Text style={styles.title}>{hasCompletedBefore ? puzzle.name : '????'}</Text>
             <Text style={styles.subtitle}>{subtitleText}</Text>
           </View>
 
@@ -544,11 +562,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+    fontFamily: 'Kenney-Future',
   },
   subtitle: {
     fontSize: 12,
     color: '#666',
     marginTop: 2,
+    fontFamily: 'Kenney-Future',
   },
   gameInfo: {
     flexDirection: 'row',
@@ -567,6 +587,7 @@ const styles = StyleSheet.create({
     color: '#333',
     marginLeft: 4,
     fontWeight: '500',
+    fontFamily: 'Kenney-Future',
   },
   gameArea: {
     flex: 1,
@@ -663,6 +684,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#666',
     marginLeft: 4,
+    fontFamily: 'Kenney-Future',
   },
   modeButtonTextActive: {
     color: '#fff',
@@ -688,6 +710,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
     marginLeft: 4,
+    fontFamily: 'Kenney-Future',
   },
 });
 
