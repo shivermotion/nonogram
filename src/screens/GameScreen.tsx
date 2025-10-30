@@ -53,6 +53,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   const [completedTime, setCompletedTime] = useState<number>(0);
   const [completedHints, setCompletedHints] = useState<number>(0);
   const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
+  const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(null);
+  const [highlightedColIndex, setHighlightedColIndex] = useState<number | null>(null);
   const [hasCompletedBefore, setHasCompletedBefore] = useState(false);
 
   // Pause overlay animation values
@@ -429,8 +431,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
                       cellSize={cellSize}
                       showSolution={showSolution}
                       inputMode={inputMode}
+                      highlightedRowIndex={highlightedRowIndex}
+                      highlightedColIndex={highlightedColIndex}
                     />
                   )}
+                  onRowCluePress={rowIndex => {
+                    setHighlightedRowIndex(prev => (prev === rowIndex ? null : rowIndex));
+                    setHighlightedColIndex(null);
+                  }}
+                  onColCluePress={colIndex => {
+                    setHighlightedColIndex(prev => (prev === colIndex ? null : colIndex));
+                    setHighlightedRowIndex(null);
+                  }}
                 />
               </View>
             </View>

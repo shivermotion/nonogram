@@ -18,6 +18,7 @@ import {
   autoSolveObvious, 
   generateClues 
 } from '../utils/nonogramLogic';
+import { playFill, playMark, playAutoMarkLine } from '../utils/audio';
 
 interface UseGameProps {
   puzzle: NonogramPuzzle;
@@ -69,6 +70,13 @@ export function useGame({ puzzle, onGameComplete, onGameStateChange, onFinalCell
       
       newGrid[row][col] = targetState;
 
+      // Play per-action sound for direct user action
+      if (targetState === CellState.FILLED) {
+        playFill();
+      } else if (targetState === CellState.MARKED) {
+        playMark();
+      }
+
       // Auto-mark remaining EMPTY cells only when a line transitions to complete
       const rowClues = puzzle.rowClues[row];
       const colClues = puzzle.colClues[col];
@@ -89,6 +97,8 @@ export function useGame({ puzzle, onGameComplete, onGameStateChange, onFinalCell
               newGrid[row][c] = CellState.MARKED;
             }
           }
+          // Special sound once per auto-mark row
+          playAutoMarkLine();
         }
       }
 
@@ -110,6 +120,8 @@ export function useGame({ puzzle, onGameComplete, onGameStateChange, onFinalCell
               newGrid[r][col] = CellState.MARKED;
             }
           }
+          // Special sound once per auto-mark column
+          playAutoMarkLine();
         }
       }
 

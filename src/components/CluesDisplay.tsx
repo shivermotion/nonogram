@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { Clue, NonogramPuzzle, CellState } from '../types/game';
 import { isLineValid } from '../utils/nonogramLogic';
 
@@ -13,6 +13,8 @@ interface CluesDisplayProps {
   showValidation?: boolean;
   cellSize?: number;
   renderGrid?: () => React.ReactNode;
+  onRowCluePress?: (rowIndex: number) => void;
+  onColCluePress?: (colIndex: number) => void;
 }
 
 export const CluesDisplay: React.FC<CluesDisplayProps> = ({
@@ -21,6 +23,8 @@ export const CluesDisplay: React.FC<CluesDisplayProps> = ({
   showValidation = false,
   cellSize: propCellSize,
   renderGrid,
+  onRowCluePress,
+  onColCluePress,
 }) => {
   const { size, rowClues, colClues } = puzzle;
 
@@ -66,8 +70,8 @@ export const CluesDisplay: React.FC<CluesDisplayProps> = ({
     maxAllowedColClues = theoreticalMaxCol;
   }
 
-  const rowClueWidth = maxAllowedRowClues * clueNumberWidth + 15;
-  const colClueHeight = maxAllowedColClues * clueNumberHeight + 15;
+  const rowClueWidth = maxAllowedRowClues * clueNumberWidth + 10;
+  const colClueHeight = maxAllowedColClues * clueNumberHeight + 10;
 
   const isRowValid = (rowIndex: number): boolean => {
     if (!grid || !showValidation) return true;
@@ -85,7 +89,7 @@ export const CluesDisplay: React.FC<CluesDisplayProps> = ({
     const isEvenRow = index % 2 === 0;
 
     return (
-      <View
+      <TouchableOpacity
         key={index}
         style={[
           styles.rowClue,
@@ -95,13 +99,15 @@ export const CluesDisplay: React.FC<CluesDisplayProps> = ({
             backgroundColor: isValid ? (isEvenRow ? '#f8f9fa' : '#ffffff') : '#ffebee',
           },
         ]}
+        activeOpacity={0.7}
+        onPress={() => onRowCluePress?.(index)}
       >
         <Text
           style={[styles.clueText, { color: isValid ? '#333' : '#d32f2f', fontSize: clueFontSize }]}
         >
           {clue[0] === 0 ? '0' : clue.join(' ')}
         </Text>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -110,7 +116,7 @@ export const CluesDisplay: React.FC<CluesDisplayProps> = ({
     const isEvenCol = index % 2 === 0;
 
     return (
-      <View
+      <TouchableOpacity
         key={index}
         style={[
           styles.colClue,
@@ -120,6 +126,8 @@ export const CluesDisplay: React.FC<CluesDisplayProps> = ({
             backgroundColor: isValid ? (isEvenCol ? '#f8f9fa' : '#ffffff') : '#ffebee',
           },
         ]}
+        activeOpacity={0.7}
+        onPress={() => onColCluePress?.(index)}
       >
         {clue[0] === 0 ? (
           <Text
@@ -145,23 +153,25 @@ export const CluesDisplay: React.FC<CluesDisplayProps> = ({
             </Text>
           ))
         )}
-      </View>
+      </TouchableOpacity>
     );
   };
+
+  const gridPadding = 2; // Match GameGrid container padding for alignment
 
   return (
     <View style={styles.container}>
       {/* Top row: Corner + Column clues */}
       <View style={styles.topRow}>
         <View style={[styles.corner, { width: rowClueWidth, height: colClueHeight }]} />
-        <View style={styles.colCluesContainer}>
+        <View style={[styles.colCluesContainer, { marginLeft: gridPadding }]}>
           {colClues.map((clue, index) => renderColClue(clue, index))}
         </View>
       </View>
 
       {/* Bottom row: Row clues + Grid */}
       <View style={styles.bottomRow}>
-        <View style={styles.rowCluesContainer}>
+        <View style={[styles.rowCluesContainer, { marginTop: gridPadding }]}>
           {rowClues.map((clue, index) => renderRowClue(clue, index))}
         </View>
         {renderGrid && renderGrid()}
@@ -196,14 +206,14 @@ const styles = StyleSheet.create({
   rowClue: {
     justifyContent: 'center',
     alignItems: 'flex-end',
-    paddingRight: 8,
+    paddingRight: 2,
     borderBottomWidth: 0.5,
     borderBottomColor: '#ddd',
   },
   colClue: {
     justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingBottom: 8,
+    paddingBottom: 2,
     borderRightWidth: 0.5,
     borderRightColor: '#ddd',
     flexDirection: 'column',
