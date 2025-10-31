@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   USER_PROFILE: 'nonogram_user_profile',
   COMPLETED_PUZZLES: 'nonogram_completed_puzzles',
   ACHIEVEMENTS: 'nonogram_achievements',
+  TUTORIAL_STATUS: 'nonogram_tutorial_status',
 };
 
 // Game Session Management
@@ -350,5 +351,26 @@ export async function resetSettingsToDefaults(): Promise<void> {
     console.log('Settings have been reset to defaults');
   } catch (error) {
     console.error('Failed to reset settings:', error);
+  }
+}
+
+// Tutorial Status (completed | skipped | undefined)
+export type TutorialStatus = 'completed' | 'skipped';
+
+export async function getTutorialStatus(): Promise<TutorialStatus | null> {
+  try {
+    const status = await AsyncStorage.getItem(STORAGE_KEYS.TUTORIAL_STATUS);
+    return status ? (status as TutorialStatus) : null;
+  } catch (error) {
+    console.error('Failed to load tutorial status:', error);
+    return null;
+  }
+}
+
+export async function setTutorialStatus(status: TutorialStatus): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.TUTORIAL_STATUS, status);
+  } catch (error) {
+    console.error('Failed to save tutorial status:', error);
   }
 }

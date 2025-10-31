@@ -9,11 +9,8 @@ import MenuScreen from './src/screens/MenuScreen';
 import GameScreen from './src/screens/GameScreen';
 import TitleScreen from './src/screens/TitleScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import {
-  getOrCreateUserProfile,
-  updateStats,
-  checkAndUnlockAchievements,
-} from './src/utils/storage';
+import TutorialScreen from './src/screens/TutorialScreen';
+import { getOrCreateUserProfile, updateStats, checkAndUnlockAchievements, getTutorialStatus, TutorialStatus } from './src/utils/storage';
 import { preloadAudio } from './src/utils/audio';
 
 export default function App() {
@@ -21,6 +18,8 @@ export default function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showTitle, setShowTitle] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStatus, setTutorialStatus] = useState<TutorialStatus | null>(null);
 
   useEffect(() => {
     // Initialize user profile on app start
@@ -33,6 +32,8 @@ export default function App() {
         const profile = await getOrCreateUserProfile();
         setUserProfile(profile);
         await preloadAudio();
+        const tStatus = await getTutorialStatus();
+        setTutorialStatus(tStatus);
       } catch (error) {
         console.error('Failed to initialize user profile:', error);
       }
@@ -97,6 +98,10 @@ export default function App() {
             onStart={() => {
               setShowSettings(false);
               setShowTitle(false);
+              // First-time routing to tutorial
+              if (!tutorialStatus) {
+                setShowTutorial(true);
+              }
             }}
             onOpenSettings={() => {
               setShowTitle(false);
@@ -108,6 +113,12 @@ export default function App() {
             onBack={() => {
               setShowSettings(false);
               setShowTitle(true);
+            }}
+          />
+        ) : showTutorial ? (
+          <TutorialScreen
+            onFinish={() => {
+              setShowTutorial(false);
             }}
           />
         ) : currentPuzzle ? (
