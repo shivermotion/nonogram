@@ -11,6 +11,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSequence,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 import { NonogramPuzzle, CellState, Position } from '../types/game';
 import { useGame } from '../hooks/useGame';
 import GameGrid from '../components/GameGrid';
@@ -21,6 +29,7 @@ import GridBackground from '../components/GridBackground';
 import LevelCompleteOverlay from '../components/LevelCompleteOverlay';
 import { playCompletion, playLevelCompleteMusic } from '../utils/audio';
 import { hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '../utils/haptics';
+import { isPuzzleCompleted } from '../utils/storage';
 
 const windowDimensions = Dimensions.get('window');
 const screenWidth = windowDimensions.width;
@@ -44,6 +53,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
   const [completedTime, setCompletedTime] = useState<number>(0);
   const [completedHints, setCompletedHints] = useState<number>(0);
   const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
+  const [highlightedRowIndex, setHighlightedRowIndex] = useState<number | null>(null);
+  const [highlightedColIndex, setHighlightedColIndex] = useState<number | null>(null);
+  const [hasCompletedBefore, setHasCompletedBefore] = useState(false);
+
+  // Pause overlay animation values
+  const pauseOverlayOpacity = useSharedValue(0);
+  const pauseTitleOpacity = useSharedValue(0);
+  const pauseTitleScale = useSharedValue(0.5);
+  const pauseTitleTranslateY = useSharedValue(30);
+  const pauseButtonOpacity = useSharedValue(0);
+  const pauseButtonTranslateY = useSharedValue(30);
 
   // Clue sizing calculation (shared) to avoid duplication
   const clueSizing = useMemo(() => {
@@ -161,6 +181,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
     },
   });
 
+  // Determine if this puzzle was previously completed to decide header title visibility
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const completed = await isPuzzleCompleted(puzzle.id);
+        if (mounted) setHasCompletedBefore(!!completed);
+      } catch (e) {
+        // noop on error
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [puzzle.id]);
+
   // Local UI tick to refresh the timer text while playing
   useEffect(() => {
     if (!isPlaying) return;
@@ -236,6 +272,36 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
     [session.currentGrid]
   );
 
+  // Pause overlay animations
+  useEffect(() => {
+    if (isPaused) {
+      // Show pause overlay
+      pauseOverlayOpacity.value = withTiming(1, { duration: 300 });
+      pauseTitleOpacity.value = withDelay(100, withTiming(1, { duration: 400 }));
+      pauseTitleScale.value = withDelay(
+        100,
+        withSequence(withTiming(1.1, { duration: 200 }), withTiming(1, { duration: 200 }))
+      );
+      pauseTitleTranslateY.value = withDelay(
+        100,
+        withTiming(0, { duration: 400, easing: Easing.out(Easing.back(1.2)) })
+      );
+      pauseButtonOpacity.value = withDelay(300, withTiming(1, { duration: 400 }));
+      pauseButtonTranslateY.value = withDelay(
+        300,
+        withTiming(0, { duration: 400, easing: Easing.out(Easing.back(1.2)) })
+      );
+    } else {
+      // Hide pause overlay
+      pauseOverlayOpacity.value = withTiming(0, { duration: 200 });
+      pauseTitleOpacity.value = withTiming(0, { duration: 200 });
+      pauseTitleScale.value = withTiming(0.5, { duration: 200 });
+      pauseTitleTranslateY.value = withTiming(30, { duration: 200 });
+      pauseButtonOpacity.value = withTiming(0, { duration: 200 });
+      pauseButtonTranslateY.value = withTiming(30, { duration: 200 });
+    }
+  }, [isPaused]);
+
   const handlePause = useCallback(() => {
     if (isPlaying) {
       pauseGame();
@@ -249,6 +315,49 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
       <DepthFog visible intensity={0.1} color="#2D1B3D" />
       <GridBackground spacing={64} thickness={6} color="#F8F9FF" />
       <LightRays visible rayCount={3} intensity={1} color="#F8F9FF" />
+
+      {/* Pause Overlay - Full Screen */}
+      {isPaused && (
+        <Animated.View
+          style={[
+            styles.pausedOverlay,
+            {
+              opacity: pauseOverlayOpacity,
+            },
+          ]}
+        >
+          <Animated.Text
+            style={[
+              styles.pausedText,
+              {
+                opacity: pauseTitleOpacity,
+                transform: [{ scale: pauseTitleScale }, { translateY: pauseTitleTranslateY }],
+              },
+            ]}
+          >
+            Game Paused
+          </Animated.Text>
+
+          <Animated.View
+            style={[
+              {
+                opacity: pauseButtonOpacity,
+                transform: [{ translateY: pauseButtonTranslateY }],
+              },
+            ]}
+          >
+            <TouchableOpacity
+              onPress={() => {
+                hapticLight();
+                resumeGame();
+              }}
+              style={styles.resumeButton}
+            >
+              <Text style={styles.resumeButtonText}>Resume</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
+      )}
 
       <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
         {/* Header */}
@@ -267,7 +376,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
-            <Text style={styles.title}>{puzzle.name}</Text>
+            <Text style={styles.title}>{hasCompletedBefore ? puzzle.name : '????'}</Text>
             <Text style={styles.subtitle}>{subtitleText}</Text>
           </View>
 
@@ -304,45 +413,40 @@ export const GameScreen: React.FC<GameScreenProps> = ({ puzzle, onBack, onComple
 
         {/* Game Area */}
         <View style={styles.gameArea}>
-          {isPaused ? (
-            <View style={styles.pausedOverlay}>
-              <Text style={styles.pausedText}>Game Paused</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  hapticLight();
-                  resumeGame();
-                }}
-                style={styles.resumeButton}
-              >
-                <Text style={styles.resumeButtonText}>Resume</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.gameContent}>
-              <View style={styles.puzzleLayout}>
-                <View style={styles.gridContainer}>
-                  <CluesDisplay
-                    puzzle={puzzle}
-                    grid={session.currentGrid}
-                    showValidation={true}
-                    cellSize={cellSize}
-                    renderGrid={() => (
-                      <GameGrid
-                        puzzle={puzzle}
-                        grid={session.currentGrid}
-                        onCellPress={handleCellPress}
-                        onCellLongPress={handleCellLongPress}
-                        disabled={!isPlaying}
-                        cellSize={cellSize}
-                        showSolution={showSolution}
-                        inputMode={inputMode}
-                      />
-                    )}
-                  />
-                </View>
+          <View style={styles.gameContent}>
+            <View style={styles.puzzleLayout}>
+              <View style={styles.gridContainer}>
+                <CluesDisplay
+                  puzzle={puzzle}
+                  grid={session.currentGrid}
+                  showValidation={true}
+                  cellSize={cellSize}
+                  renderGrid={() => (
+                    <GameGrid
+                      puzzle={puzzle}
+                      grid={session.currentGrid}
+                      onCellPress={handleCellPress}
+                      onCellLongPress={handleCellLongPress}
+                      disabled={!isPlaying}
+                      cellSize={cellSize}
+                      showSolution={showSolution}
+                      inputMode={inputMode}
+                      highlightedRowIndex={highlightedRowIndex}
+                      highlightedColIndex={highlightedColIndex}
+                    />
+                  )}
+                  onRowCluePress={rowIndex => {
+                    setHighlightedRowIndex(prev => (prev === rowIndex ? null : rowIndex));
+                    setHighlightedColIndex(null);
+                  }}
+                  onColCluePress={colIndex => {
+                    setHighlightedColIndex(prev => (prev === colIndex ? null : colIndex));
+                    setHighlightedRowIndex(null);
+                  }}
+                />
               </View>
             </View>
-          )}
+          </View>
         </View>
 
         {/* Controls */}
@@ -470,11 +574,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+    fontFamily: 'Kenney-Future',
   },
   subtitle: {
     fontSize: 12,
     color: '#666',
     marginTop: 2,
+    fontFamily: 'Kenney-Future',
   },
   gameInfo: {
     flexDirection: 'row',
@@ -493,6 +599,7 @@ const styles = StyleSheet.create({
     color: '#333',
     marginLeft: 4,
     fontWeight: '500',
+    fontFamily: 'Kenney-Future',
   },
   gameArea: {
     flex: 1,
@@ -517,26 +624,47 @@ const styles = StyleSheet.create({
     right: 0,
   },
   pausedOverlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: screenWidth,
+    height: screenHeight,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 9999,
   },
   pausedText: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 20,
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 40,
+    fontFamily: 'Kenney-Future',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
   },
   resumeButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#167DA8',
     paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    shadowColor: '#167DA8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: '#1C9FD7',
   },
   resumeButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
+    fontFamily: 'Kenney-Future',
   },
   controls: {
     backgroundColor: '#fff',
@@ -568,6 +696,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#666',
     marginLeft: 4,
+    fontFamily: 'Kenney-Future',
   },
   modeButtonTextActive: {
     color: '#fff',
@@ -593,6 +722,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
     marginLeft: 4,
+    fontFamily: 'Kenney-Future',
   },
 });
 

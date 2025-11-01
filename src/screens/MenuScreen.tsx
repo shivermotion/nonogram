@@ -24,6 +24,7 @@ import GridBackground from '../components/GridBackground';
 interface MenuScreenProps {
   onPuzzleSelect: (puzzle: NonogramPuzzle) => void;
   onBack: () => void;
+  onOpenTutorial?: () => void;
 }
 
 enum FilterType {
@@ -33,7 +34,11 @@ enum FilterType {
   SIZE = 'size',
 }
 
-export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }) => {
+export const MenuScreen: React.FC<MenuScreenProps> = ({
+  onPuzzleSelect,
+  onBack,
+  onOpenTutorial,
+}) => {
   const [filterType, setFilterType] = useState<FilterType>(FilterType.ALL);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [completedMap, setCompletedMap] = useState<Record<string, any>>({});
@@ -833,7 +838,22 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({ onPuzzleSelect, onBack }
           >
             Puzzles
           </Animated.Text>
-          <View style={{ padding: 8 }} />
+          <TouchableOpacity
+            onPress={async () => {
+              hapticLight();
+              await playClick();
+              onOpenTutorial?.();
+            }}
+            style={{ padding: 8, flexDirection: 'row', alignItems: 'center' }}
+          >
+            <Image
+              source={require('../../assets/icons/question_mark.png')}
+              style={{ width: 20, height: 20, marginRight: 4 }}
+            />
+            <Text style={{ fontSize: 12, color: '#333', fontFamily: 'Kenney-Future' }}>
+              Tutorial
+            </Text>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Filter Tabs */}

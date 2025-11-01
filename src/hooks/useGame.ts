@@ -15,8 +15,10 @@ import {
   isPuzzleComplete, 
   isGridValid, 
   isLineValid,
-  autoSolveObvious 
+  autoSolveObvious, 
+  generateClues 
 } from '../utils/nonogramLogic';
+import { playFill, playMark, playAutoMarkLine } from '../utils/audio';
 
 interface UseGameProps {
   puzzle: NonogramPuzzle;
@@ -67,6 +69,61 @@ export function useGame({ puzzle, onGameComplete, onGameStateChange, onFinalCell
       }
       
       newGrid[row][col] = targetState;
+
+      // Play per-action sound for direct user action
+      if (targetState === CellState.FILLED) {
+        playFill();
+      } else if (targetState === CellState.MARKED) {
+        playMark();
+      }
+
+      // Auto-mark remaining EMPTY cells only when a line transitions to complete
+      const rowClues = puzzle.rowClues[row];
+      const colClues = puzzle.colClues[col];
+
+      // Row transition check (prev -> new)
+      {
+        const prevFilledRow = prev.currentGrid[row].map(cell => cell === CellState.FILLED);
+        const prevRowGroups = generateClues(prevFilledRow);
+        const wasRowComplete = JSON.stringify(prevRowGroups) === JSON.stringify(rowClues);
+
+        const newFilledRow = newGrid[row].map(cell => cell === CellState.FILLED);
+        const newRowGroups = generateClues(newFilledRow);
+        const isRowNowComplete = JSON.stringify(newRowGroups) === JSON.stringify(rowClues);
+
+        if (!wasRowComplete && isRowNowComplete) {
+          for (let c = 0; c < newGrid[row].length; c++) {
+            if (newGrid[row][c] === CellState.EMPTY) {
+              newGrid[row][c] = CellState.MARKED;
+            }
+          }
+          // Special sound once per auto-mark row
+          playAutoMarkLine();
+        }
+      }
+
+      // Column transition check (prev -> new)
+      {
+        const prevColumn = prev.currentGrid.map(r => r[col]);
+        const prevFilledCol = prevColumn.map(cell => cell === CellState.FILLED);
+        const prevColGroups = generateClues(prevFilledCol);
+        const wasColComplete = JSON.stringify(prevColGroups) === JSON.stringify(colClues);
+
+        const newColumn = newGrid.map(r => r[col]);
+        const newFilledCol = newColumn.map(cell => cell === CellState.FILLED);
+        const newColGroups = generateClues(newFilledCol);
+        const isColNowComplete = JSON.stringify(newColGroups) === JSON.stringify(colClues);
+
+        if (!wasColComplete && isColNowComplete) {
+          for (let r = 0; r < newGrid.length; r++) {
+            if (newGrid[r][col] === CellState.EMPTY) {
+              newGrid[r][col] = CellState.MARKED;
+            }
+          }
+          // Special sound once per auto-mark column
+          playAutoMarkLine();
+        }
+      }
 
       // Check if puzzle is complete by comparing against the exact solution
       const isComplete = (() => {

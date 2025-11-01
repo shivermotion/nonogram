@@ -1,10 +1,12 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Dimensions, Image as RNImage } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withSequence,
+  withRepeat,
+  interpolate,
 } from 'react-native-reanimated';
 import {
   PanGestureHandler,
@@ -12,7 +14,7 @@ import {
   PanGestureHandlerStateChangeEvent,
   PanGestureHandlerGestureEvent,
 } from 'react-native-gesture-handler';
-import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient, Stop, SvgXml } from 'react-native-svg';
 import { CellState, Position, NonogramPuzzle } from '../types/game';
 import { hapticLight, hapticMedium } from '../utils/haptics';
 import StoneChipParticles, { StoneChipParticlesRef } from './StoneChipParticles';
@@ -56,6 +58,30 @@ const CrossIcon: React.FC<{ size: number }> = ({ size }) => (
     />
   </Svg>
 );
+
+const AnimatedMarkIcon: React.FC<{ size: number }> = ({ size }) => {
+  const scale = useSharedValue(0.6);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    scale.value = withSequence(
+      withTiming(1.05, { duration: 120 }),
+      withTiming(1, { duration: 100 })
+    );
+    opacity.value = withTiming(1, { duration: 180 });
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View style={style}>
+      <CrossIcon size={size} />
+    </Animated.View>
+  );
+};
 
 const FlatButtonIcon: React.FC<{ size: number }> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 64 64">
@@ -185,6 +211,10 @@ interface GameGridProps {
   cellSize?: number;
   showSolution?: boolean;
   inputMode?: 'fill' | 'mark'; // To determine if we're filling or marking
+  highlightedRowIndex?: number | null;
+  highlightedColIndex?: number | null;
+  pointerType?: 'row' | 'col' | 'cell';
+  pointerTarget?: { row?: number; col?: number } | null;
 }
 
 export const GameGrid: React.FC<GameGridProps> = ({
@@ -197,6 +227,10 @@ export const GameGrid: React.FC<GameGridProps> = ({
   cellSize: propCellSize,
   showSolution = false,
   inputMode = 'fill',
+  highlightedRowIndex = null,
+  highlightedColIndex = null,
+  pointerType,
+  pointerTarget = null,
 }) => {
   const { size } = puzzle;
   const isDraggingRef = useRef(false);
@@ -234,6 +268,56 @@ export const GameGrid: React.FC<GameGridProps> = ({
   const cellSize = propCellSize ?? getOptimalCellSize();
   const actualGridWidth = cellSize * size.width;
   const actualGridHeight = cellSize * size.height;
+
+  // Breathing glow for highlighted edges
+  const glow = useSharedValue(0.4);
+  useEffect(() => {
+    glow.value = withRepeat(
+      withSequence(withTiming(1, { duration: 1400 }), withTiming(0.4, { duration: 1400 })),
+      -1,
+      true
+    );
+  }, []);
+  const glowOpacityStyle = useAnimatedStyle(() => ({ opacity: glow.value }));
+  const glowShadowOpacityStyle = useAnimatedStyle(() => ({
+    shadowOpacity: interpolate(glow.value, [0.4, 1], [0.2, 0.6]),
+  }));
+  const handAnim = useSharedValue(0);
+  useEffect(() => {
+    handAnim.value = withRepeat(
+      withSequence(withTiming(1, { duration: 700 }), withTiming(0, { duration: 700 })),
+      -1,
+      true
+    );
+  }, []);
+
+  const POINTER_HAND_SVG = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 960 1200\"><path d=\"M660,390v120h-60V390H660z\"/><path d=\"M570,390v120h-60V390H570z\"/><path d=\"M480,390v120h-30v-30h-30v-90H480z\"/><path d=\"M660,720v120H330V720h30v30h60v-30h-60v-30h-60v-30h-30V510h30v-30h120v60h-60v30h-30v30h30v-30h60v-30h60v-30h30v30h60v-30  h30v30h60v150h-30v30H510v30h120v-30H660z\"/><rect x=\"360\" y=\"840\" width=\"270\" height=\"30\"/><rect x=\"330\" y=\"180\" width=\"60\" height=\"270\"/></svg>`;
+
+  const handRowStyle = useAnimatedStyle(() => ({
+    position: 'absolute',
+    left: -40 + interpolate(handAnim.value, [0, 1], [0, -6]),
+    top:
+      pointerTarget?.row !== undefined ? pointerTarget.row * cellSize + cellSize / 2 - 18 : -1000,
+    transform: [{ rotate: '90deg' }],
+  }));
+  const handColStyle = useAnimatedStyle(() => ({
+    position: 'absolute',
+    left:
+      pointerTarget?.col !== undefined ? pointerTarget.col * cellSize + cellSize / 2 - 18 : -1000,
+    top: -40 + interpolate(handAnim.value, [0, 1], [0, -6]),
+    transform: [{ rotate: '90deg' }],
+  }));
+  const handCellStyle = useAnimatedStyle(() => ({
+    position: 'absolute',
+    left:
+      pointerTarget?.col !== undefined ? pointerTarget.col * cellSize + cellSize / 2 - 20 : -1000,
+    top:
+      pointerTarget?.row !== undefined ? pointerTarget.row * cellSize + cellSize / 2 - 20 : -1000,
+    transform: [
+      { rotate: '90deg' },
+      { scale: 0.95 + interpolate(handAnim.value, [0, 1], [0, 0.1]) },
+    ],
+  }));
 
   const getCellStyle = (row: number, col: number) => {
     const cell = grid[row][col];
@@ -354,7 +438,9 @@ export const GameGrid: React.FC<GameGridProps> = ({
                 ) : (
                   <GradientButtonIcon size={cellSize} />
                 ))}
-              {grid[rowIndex][colIndex] === CellState.MARKED && <CrossIcon size={cellSize * 0.6} />}
+              {grid[rowIndex][colIndex] === CellState.MARKED && (
+                <AnimatedMarkIcon size={cellSize * 0.6} />
+              )}
             </TouchableOpacity>
           );
         })}
@@ -481,6 +567,133 @@ export const GameGrid: React.FC<GameGridProps> = ({
       ]}
     >
       {gridContent}
+      {(highlightedRowIndex !== null || highlightedColIndex !== null) && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 2,
+            left: 2,
+            width: actualGridWidth,
+            height: actualGridHeight,
+          }}
+        >
+          {highlightedRowIndex !== null && (
+            <>
+              <Animated.View
+                style={[
+                  {
+                    position: 'absolute',
+                    left: 0,
+                    top: highlightedRowIndex * cellSize - 2,
+                    width: actualGridWidth,
+                    height: 4,
+                    backgroundColor: '#36BDF7',
+                    shadowColor: '#167DA8',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowRadius: 6,
+                    elevation: 6,
+                    borderRadius: 2,
+                  },
+                  glowOpacityStyle,
+                  glowShadowOpacityStyle,
+                ]}
+              />
+              <Animated.View
+                style={[
+                  {
+                    position: 'absolute',
+                    left: 0,
+                    top: (highlightedRowIndex + 1) * cellSize - 2,
+                    width: actualGridWidth,
+                    height: 4,
+                    backgroundColor: '#36BDF7',
+                    shadowColor: '#167DA8',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowRadius: 6,
+                    elevation: 6,
+                    borderRadius: 2,
+                  },
+                  glowOpacityStyle,
+                  glowShadowOpacityStyle,
+                ]}
+              />
+            </>
+          )}
+          {highlightedColIndex !== null && (
+            <>
+              <Animated.View
+                style={[
+                  {
+                    position: 'absolute',
+                    top: 0,
+                    left: highlightedColIndex * cellSize - 2,
+                    width: 4,
+                    height: actualGridHeight,
+                    backgroundColor: '#36BDF7',
+                    shadowColor: '#167DA8',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowRadius: 6,
+                    elevation: 6,
+                    borderRadius: 2,
+                  },
+                  glowOpacityStyle,
+                  glowShadowOpacityStyle,
+                ]}
+              />
+              <Animated.View
+                style={[
+                  {
+                    position: 'absolute',
+                    top: 0,
+                    left: (highlightedColIndex + 1) * cellSize - 2,
+                    width: 4,
+                    height: actualGridHeight,
+                    backgroundColor: '#36BDF7',
+                    shadowColor: '#167DA8',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowRadius: 6,
+                    elevation: 6,
+                    borderRadius: 2,
+                  },
+                  glowOpacityStyle,
+                  glowShadowOpacityStyle,
+                ]}
+              />
+            </>
+          )}
+        </View>
+      )}
+      {pointerType && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 2,
+            left: 2,
+            width: actualGridWidth,
+            height: actualGridHeight,
+          }}
+        >
+          {pointerType === 'row' && pointerTarget?.row !== undefined && (
+            <Animated.View style={handRowStyle}>
+              <SvgXml xml={POINTER_HAND_SVG} width={36} height={36} />
+            </Animated.View>
+          )}
+          {pointerType === 'col' && pointerTarget?.col !== undefined && (
+            <Animated.View style={handColStyle}>
+              <SvgXml xml={POINTER_HAND_SVG} width={36} height={36} />
+            </Animated.View>
+          )}
+          {pointerType === 'cell' &&
+            pointerTarget?.row !== undefined &&
+            pointerTarget?.col !== undefined && (
+              <Animated.View style={handCellStyle}>
+                <SvgXml xml={POINTER_HAND_SVG} width={40} height={40} />
+              </Animated.View>
+            )}
+        </View>
+      )}
       <StoneChipParticles ref={particlesRef} />
     </View>
   );
