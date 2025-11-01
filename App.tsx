@@ -10,7 +10,13 @@ import GameScreen from './src/screens/GameScreen';
 import TitleScreen from './src/screens/TitleScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import TutorialScreen from './src/screens/TutorialScreen';
-import { getOrCreateUserProfile, updateStats, checkAndUnlockAchievements, getTutorialStatus, TutorialStatus } from './src/utils/storage';
+import {
+  getOrCreateUserProfile,
+  updateStats,
+  checkAndUnlockAchievements,
+  getTutorialStatus,
+  TutorialStatus,
+} from './src/utils/storage';
 import { preloadAudio } from './src/utils/audio';
 
 export default function App() {
@@ -134,6 +140,7 @@ export default function App() {
               setShowSettings(false);
             }}
             onPuzzleSelect={puzzle => setCurrentPuzzle(puzzle)}
+            onOpenTutorial={() => setShowTutorial(true)}
           />
         )}
       </GestureHandlerRootView>
